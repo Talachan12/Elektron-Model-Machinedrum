@@ -19,8 +19,7 @@ TABLES = {                  # adresse, pas (octets) entre deux valeurs de potard
     "hold": (0x24c794 + 0x320, 8),      # (HOLD >> 4) & 0xffc = 8k octets
     "dirt": (0x24d794, 4),              # tbl[DIRT >> 7]
 }
-# table des décroissances des machines EFM : 0x24bf94 + 0x24c + 4 * ((potard << 7) * mul >> 12), mul <= 0x52
-LUT = (0x24bf94 + 0x24c, 326)
+
 NAME_AT = 0x24f4b9          # "TRXB2PTCHDEC\0RAMPHOLDTICKNOISDIRTDIST" : verifie que c'est le bon OS
 NAME = b"TRXB2PTCHDEC\x00RAMPHOLDTICKNOISDIRTDIST"
 FN_AT, FN_HEAD = 0x201fd2, bytes.fromhex("4feffff448d70c04226f0010246f0014")
@@ -60,6 +59,45 @@ def coldfire_os(path):
     return aplib.depack(img[:8 + n])[0], sha
 
 
+# TRX-SD (fonction ColdFire 0x2013a6) : une valeur par potard
+def _sd_cf(long, long_any):
+    lut = lambda off, idx: [long(0x24bf94 + off + 4 * idx(k)) for k in range(128)]
+    return {
+        "sd_dec1": lut(0x370, lambda k: k),                              # DEC
+        "sd_dec2": lut(0x3a0, lambda k: k >> 1),                         # DEC / 2 : bruit
+        "sd_benv": [long_any(0x24bf94 + 0x3c + (((k << 7) * 5) >> 10)) for k in range(128)],  # adresse non alignee
+        "sd_clip": [long(0x24c794 + 0x1e0 + 4 * (((k << 7) * 0x62b3) >> 21)) for k in range(128)],
+    }
+
+
+def dsp_image(path):
+    """Mémoire du DSP A (section 1 de l'OS du Machinedrum) : {"P"|"X"|"Y" : {adresse : mot de 24 bits}}. Mots de 24
+    bits petit-boutistes, en-tête de 4 mots, puis des enregistrements [espace][adresse][nombre] + mots."""
+    img, _ = image(path)
+    n0 = int.from_bytes(img[:4], "big")
+    at = 8 + n0
+    n1 = int.from_bytes(img[at:at + 4], "big")
+    if (sum(img[at + 8:at + 8 + n1]) & 0xffffffff) != int.from_bytes(img[at + 4:at + 8], "big"):
+        raise SystemExit("!! section 1 de l'OS du Machinedrum : somme fausse")
+    d = aplib.depack(img[at:at + 8 + n1])[0]
+    w = [int.from_bytes(d[i:i + 3], "little") for i in range(0, len(d) - 2, 3)]
+    mem = {"P": {}, "X": {}, "Y": {}}
+    i = 4
+    while i + 3 <= len(w):
+        sp, addr, cnt = w[i:i + 3]
+        if cnt == 0 or sp > 2 or i + 3 + cnt > len(w):
+            break
+        m = mem["PXY"[sp]]
+        for k in range(cnt):
+            m[addr + k] = w[i + 3 + k]
+        i += 3 + cnt
+    return mem
+
+
+def _s24(v):
+    return v - (1 << 24) if v & 0x800000 else v
+
+
 def tables(path):
     cf, sha = coldfire_os(path)
     if sha != OS_SHA256:
@@ -73,7 +111,13 @@ def tables(path):
         return v - (1 << 32) if v >> 31 else v
 
     out = {k: [s32(at(a + step * i, 4)) for i in range(128)] for k, (a, step) in TABLES.items()}
-    out["lut"] = [s32(at(LUT[0] + 4 * i, 4)) for i in range(LUT[1])]
+    out.update(_sd_cf(lambda va: s32(at(va, 4)), lambda va: s32(at(va, 4))))
+    # TRX-SD, données du DSP A : coefficients des résonateurs du bruit (x:$140900 + yb - 3, x:$141900 + yb - 0x241,
+    # yb = PTCH/32 + 0x400 = 4 potard + 0x400) et échantillon d'attaque (P:$100881, 4096 mots)
+    dsp = dsp_image(path)
+    out["sd_k1"] = [_s24(dsp["X"][0x140900 + 0x400 + 4 * k - 3]) for k in range(128)]
+    out["sd_k2"] = [_s24(dsp["X"][0x141900 + 0x400 + 4 * k - 0x241]) for k in range(128)]
+    out["sd_snap"] = [_s24(dsp["P"][0x100881 + i]) for i in range(4096)]
     return out, sha
 
 

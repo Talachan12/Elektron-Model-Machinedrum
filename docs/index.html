@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Machinedrum Machines Patcher</title>
-<meta name="description" content="Add the Machinedrum TRX-B2, EFM-BD and EFM-SD machines to your Model:Cycles, built in your browser from your own official firmware files.">
+<meta name="description" content="Add the Machinedrum TRX-B2 and TRX-SD machines to your Model:Cycles, built in your browser from your own official firmware files.">
 <style>
 :root {
   --bg: #f6f5f2; --panel: #ffffff; --ink: #1c1c1a; --muted: #6b6a64; --line: #dedbd3;
@@ -27,7 +27,7 @@ main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 h1 { font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; }
 p.lead { color: var(--muted); margin: 8px 0 24px; }
-.machines { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 24px; }
+.machines { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 24px; }
 .machines div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
 .machines b { display: block; font-size: 1.05rem; }
 .machines span { color: var(--muted); font-size: .85rem; }
@@ -62,13 +62,12 @@ ol { padding-left: 1.2em; margin: 0; }
   <h1>Machinedrum machines for the Model:Cycles</h1>
 </header>
 <p class="lead">
-  Three Machinedrum SPS-1 UW machines, ported sample for sample from its DSP, as machines 7–9 of the Model:Cycles (OS 1.13). The firmware is built here, in your browser, from your own official files. Nothing is uploaded.
+  Two Machinedrum SPS-1 UW machines, ported sample for sample from its DSP, as machines 7 and 8 of the Model:Cycles (OS 1.13). The firmware is built here, in your browser, from your own official files. Nothing is uploaded.
   
 </p>
 <div class="machines">
   <div><b>TrxB2</b><span>TRX-B2 kick</span></div>
-  <div><b>EfmBD</b><span>EFM-BD FM kick</span></div>
-  <div><b>EfmSD</b><span>EFM-SD FM snare</span></div>
+  <div><b>TrxSD</b><span>TRX-SD snare</span></div>
 </div>
 
 <section class="step">
@@ -110,16 +109,17 @@ ol { padding-left: 1.2em; margin: 0; }
 <section class="step">
   <h2>Knobs</h2>
   <table>
-    <tr><th>Cycles</th><th>TrxB2</th><th>EfmBD</th><th>EfmSD</th></tr>
-    <tr><td>PITCH</td><td colspan="3">PTCH (+ trig note − 60)</td></tr>
-    <tr><td>DECAY</td><td colspan="3">DEC</td></tr>
-    <tr><td>COLOR</td><td>DIST</td><td>MOD</td><td>MOD</td></tr>
-    <tr><td>SHAPE</td><td>DIRT</td><td>MFRQ</td><td>MFRQ</td></tr>
-    <tr><td>SWEEP</td><td>RAMP</td><td>RAMP</td><td>NOIS</td></tr>
-    <tr><td>CONTOUR</td><td>HOLD</td><td>RDEC</td><td>NDEC</td></tr>
-    <tr><td>PUNCH</td><td>TICK 0 / 64</td><td>MFB 127 / 0</td><td>HPF 16 / 64</td></tr>
+    <tr><th>Cycles</th><th>TrxB2</th><th>TrxSD</th></tr>
+    <tr><td>PITCH</td><td colspan="2">PTCH (+ trig note − 60)</td></tr>
+    <tr><td>DECAY</td><td colspan="2">DEC</td></tr>
+    <tr><td>COLOR</td><td>DIST</td><td>SNAP</td></tr>
+    <tr><td>SHAPE</td><td>DIRT</td><td>TONE</td></tr>
+    <tr><td>SWEEP</td><td>RAMP</td><td>BUMP</td></tr>
+    <tr><td>CONTOUR</td><td>HOLD</td><td>BENV</td></tr>
+    <tr><td>PUNCH</td><td>TICK 0 / 64</td><td>CLIP 0 / 64</td></tr>
+    <tr><td>fixed</td><td>NOIS 0</td><td>TUNE 64</td></tr>
   </table>
-  <p class="note">PUNCH off keeps the Machinedrum defaults. Not combinable with the Modded-Cycles Syntakt engines, MACRO or Model-TG.</p>
+  <p class="note">PUNCH off keeps the Machinedrum defaults. The TrxSD attack sample and noise filter tables are read from your Machinedrum OS. Not combinable with the Modded-Cycles Syntakt engines, MACRO or Model-TG.</p>
 </section>
 <p class="note">Built on <a href="https://github.com/18nelli18/Modded-Cycles">Modded-Cycles</a> (MIT). Source and proofs: <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum/blob/main/MD-MACHINES.md">MD-MACHINES.md</a>.</p>
 </main>

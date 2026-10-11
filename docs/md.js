@@ -1,7 +1,7 @@
 /* Machinedrum machines patcher: what build.py --md does, in the browser.
  *
- * Port of tools/machines/md/md_os.py (reading the Machinedrum OS: SysEx transport, aPLib section 0, the TRX-B2 and
- * EFM tables) and md_sine.py (the DSP's 32768-point sine recurrence, 48-bit, here with BigInt). The "md" parts of
+ * Port of tools/machines/md/md_os.py (reading the Machinedrum OS: SysEx transport, aPLib sections 0 and 1, the TRX-B2
+ * and TRX-SD tables, the TRX-SD DSP data) and md_sine.py (the DSP's 32768-point sine recurrence, 48-bit, here with BigInt). The "md" parts of
  * the tweak become "hex" parts, then MCBuilder.build (docs/flasher/builder.js, the port of tools/build.py) builds
  * the .syx. Nothing leaves the browser. tools/md_web_check.js checks it against tools/build.py.
  * Published on GitHub Pages from docs/, with a copy of the Modded-Cycles builder.js next to it.
@@ -17,7 +17,6 @@ const TABLES = {                       // address, step in bytes, count (md_os.p
   dec: [0x24bf94 + 0x190, 12, 128],
   hold: [0x24c794 + 0x320, 8, 128],
   dirt: [0x24d794, 4, 128],
-  lut: [0x24bf94 + 0x24c, 4, 326],
 };
 const NAME_AT = 0x24f4b9;
 const NAME = "TRXB2PTCHDEC\0RAMPHOLDTICKNOISDIRTDIST";
@@ -57,14 +56,44 @@ function mdImage(raw) {
 const be32 = (b, o) => ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0;
 const s32 = (v) => v | 0;
 
-function coldfireOs(raw) {
-  const img = mdImage(raw);
-  const n = be32(img, 0);
-  let sum = 0;
-  for (let k = 8; k < 8 + n; k++) sum = (sum + img[k]) >>> 0;
-  if (sum !== be32(img, 4)) throw new Error("Machinedrum OS: section 0 checksum mismatch");
-  return B.aplibDepack(img.subarray(0, 8 + n)).data;
+/* Sections of the image: [u32 length][u32 byte sum] + aPLib stream. 0 = ColdFire OS, 1 = DSP A program. */
+function section(img, index) {
+  let at = 0;
+  for (let i = 0; ; i++) {
+    const n = be32(img, at);
+    if (i === index) {
+      let sum = 0;
+      for (let k = at + 8; k < at + 8 + n; k++) sum = (sum + img[k]) >>> 0;
+      if (sum !== be32(img, at + 4)) throw new Error(`Machinedrum OS: section ${index} checksum mismatch`);
+      return B.aplibDepack(img.subarray(at, at + 8 + n)).data;
+    }
+    at += 8 + n;
+  }
 }
+
+function coldfireOs(raw) {
+  return section(mdImage(raw), 0);
+}
+
+/* DSP A memory (section 1): 24-bit little-endian words, 4-word header, then records [space][address][count] + words.
+ * Returns {P, X, Y} as Maps address -> 24-bit word. */
+function dspImage(img) {
+  const d = section(img, 1);
+  const n = Math.floor(d.length / 3), w = new Uint32Array(n);
+  for (let i = 0; i < n; i++) w[i] = d[3 * i] | (d[3 * i + 1] << 8) | (d[3 * i + 2] << 16);
+  const mem = { P: new Map(), X: new Map(), Y: new Map() };
+  let i = 4;
+  while (i + 3 <= n) {
+    const sp = w[i], addr = w[i + 1], cnt = w[i + 2];
+    if (cnt === 0 || sp > 2 || i + 3 + cnt > n) break;
+    const m = mem["PXY"[sp]];
+    for (let k = 0; k < cnt; k++) m.set(addr + k, w[i + 3 + k]);
+    i += 3 + cnt;
+  }
+  return mem;
+}
+
+const s24 = (v) => (v & 0x800000 ? v - 0x1000000 : v);
 
 /* md_sine.py: s[n+1] = 2 cos(w) s[n] - s[n-1], 48-bit, mpyuu/dmacsu/macsu/dmacss, as the Machinedrum DSP A
  * builds it (P:$100068). */
@@ -100,7 +129,8 @@ function mdParts(raw, expectSha) {
   const sha = B.hex(B.sha256(raw));
   if (expectSha && sha !== expectSha)
     throw new Error("this is not the official Machinedrum UW OS 1.63 file (Elektron_SPS1-1UW_OS1.63.syx)");
-  const cf = coldfireOs(raw);
+  const img = mdImage(raw);
+  const cf = section(img, 0);
   const at = (va) => va - CF_BASE;
   for (let k = 0; k < NAME.length; k++)
     if (cf[at(NAME_AT) + k] !== NAME.charCodeAt(k)) throw new Error("TRX-B2 not found in this Machinedrum OS");
@@ -115,6 +145,18 @@ function mdParts(raw, expectSha) {
     for (let k = 0; k < n; k++) vals.push(s32(be32(cf, at(a) + step * k)));
     parts[name] = toBytes(vals);
   }
+  // TRX-SD (ColdFire 0x2013a6): one value per knob; BENV reads the table at an unaligned byte address
+  const long = (va) => s32(be32(cf, at(va)));
+  const k128 = (f) => Array.from({ length: 128 }, (_, k) => f(k));
+  parts.sd_dec1 = toBytes(k128((k) => long(0x24bf94 + 0x370 + 4 * k)));
+  parts.sd_dec2 = toBytes(k128((k) => long(0x24bf94 + 0x3a0 + 4 * (k >> 1))));
+  parts.sd_benv = toBytes(k128((k) => long(0x24bf94 + 0x3c + (((k << 7) * 5) >> 10))));
+  parts.sd_clip = toBytes(k128((k) => long(0x24c794 + 0x1e0 + 4 * (((k << 7) * 0x62b3) >>> 21))));
+  // TRX-SD, DSP A data: noise resonator coefficients and the attack sample (md_os.py)
+  const dsp = dspImage(img);
+  parts.sd_k1 = toBytes(k128((k) => s24(dsp.X.get(0x140900 + 0x400 + 4 * k - 3))));
+  parts.sd_k2 = toBytes(k128((k) => s24(dsp.X.get(0x141900 + 0x400 + 4 * k - 0x241))));
+  parts.sd_snap = toBytes(Array.from({ length: 4096 }, (_, i) => s24(dsp.P.get(0x100881 + i))));
   parts.sine = toBytes(Array.from(sineTable()));
   return parts;
 }

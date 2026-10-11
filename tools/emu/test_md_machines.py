@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Preuve des machines du Machinedrum ajoutées au Model:Cycles (tools/machines/md, tools/gen_md_machines.py) :
-TrxB2, EfmBD, EfmSD en 7e, 8e et 9e machines. Le vrai code de l'OS, émulé (Unicorn), avec la charge utile telle
+TrxB2 et TrxSD en 7e et 8e machines. Le vrai code de l'OS, émulé (Unicorn), avec la charge utile telle
 que le crochet de démarrage la reconstitue.
 
   1. Démarrage : le crochet (stub.S, PACK) reconstitue la charge utile, la SRAM reste intacte, retour normal.
-  2. Interface : les vérifications de test_syntakt_machines.py appliquées aux 3 machines (rangées, descripteurs,
+  2. Interface : les vérifications de test_syntakt_machines.py appliquées à nos machines (rangées, descripteurs,
      écran MACHINES, molette, enregistrements, changement de machine, icône).
   3. Son : à chaque bloc, ce que l'OS passe à l'update de la machine (note, paramètres, trig) est relu, et ce que
      sort notre render est comparé à la référence compilée pour l'ordinateur (host_ref.c : bridge.c + trx_b2.c +
-     efm.c, dont les cœurs sont identiques au DSP émulé du Machinedrum) ; changement de machine sur une piste ;
+     trx_sd.c, dont les cœurs sont identiques au DSP émulé du Machinedrum) ; changement de machine sur une piste ;
      les machines d'origine ne changent pas.
   4. Coût : instructions par bloc (une voix de chaque machine), comparées à KICK.
 
@@ -45,7 +45,7 @@ import test_syntakt_machines as tsm  # noqa: E402
 
 DEV = HERE.parent.parent / "tweaks" / "model-cycles_OS1.13"
 check = TMc.check
-FIRST = 6                           # TrxB2 ; EfmBD 7, EfmSD 8
+FIRST = 6                           # TrxB2 ; TrxSD 7
 NAMES = [m["name"] for m in gt.MACHINES]
 BASE_KW = dict(note=60, pitch=64, color=0, shape=0, sweep=96, contour=64, punch=0, gate=0, finetune=64, decay=64)
 
@@ -154,7 +154,7 @@ class HostRef:
         (tmp / "decl.h").write_text("extern char voices[];\n")
         subprocess.run(["cc", "-O2", "-std=c99", "-Wno-pointer-to-int-cast", "-include", str(tmp / "decl.h"),
                         f"-I{src}", f"-I{gen}", "-DCYC_VOICE0=((u32)(unsigned long)voices)",
-                        str(src / "bridge.c"), str(src / "trx_b2.c"), str(src / "efm.c"), str(gen / "trx_b2_md.c"),
+                        str(src / "bridge.c"), str(src / "trx_b2.c"), str(src / "trx_sd.c"), str(gen / "trx_b2_md.c"),
                         str(src / "host_ref.c"), "-o", str(self.exe)], check=True)
 
     def run(self, recs):
@@ -222,10 +222,7 @@ def cases(m):
         ("trigs rapprochés", dict(BASE_KW, punch=1), tuple(range(1, 100, 3)), None, 110),
         ("LFO hors bornes (potards < 0, PITCH + note > 127)", dict(BASE_KW, color=-20, sweep=-3, shape=127.9, pitch=120, note=90), (1,), None, 60),
     ]
-    if m == 0:
-        nxt = 1
-    else:
-        nxt = 0 if m == 2 else 2
+    nxt = (m + 1) % len(NAMES)
     out.append((f"changement de machine -> {NAMES[nxt]}", BASE_KW, (1, 50), {50: {"machine": FIRST + nxt}}, 100))
     return out
 

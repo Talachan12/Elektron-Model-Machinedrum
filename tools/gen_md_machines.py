@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Génère le tweak des machines du Machinedrum (OS 1.63) ajoutées au Model:Cycles, portées à l'échantillon près depuis
-le code de son DSP : TrxB2 (7e machine), EfmBD (8e), EfmSD (9e). Sources : tools/machines/md/ (bridge.c, trx_b2.c,
-efm.c).
+le code de son DSP : TrxB2 (7e machine), TrxSD (8e). Sources : tools/machines/md/ (bridge.c, trx_b2.c, trx_sd.c).
 
 Même mécanique que MACRO (gen_macro.py, notes/43) et que les moteurs du Syntakt (gen_syntakt_engines.py) : charge
 utile à gs.PAY_ALONE, détours (gs.detours_asm) et tables déplacées de gs.LAYOUT, pour n machines ajoutées.
@@ -51,24 +50,23 @@ CFLAGS = ["-mcpu=54418", "-O2", "-U_FORTIFY_SOURCE", "-ffreestanding", "-fno-bui
 MACHINES = (
     dict(name="TrxB2", image=0, decay=64, update="trx_b2_update",
          knobs=(("Distortion", "DIST", 0), ("Dirt", "DIRT", 0), ("Ramp", "RAMP", 96), ("Hold", "HOLD", 64))),
-    dict(name="EfmBD", image=0, decay=76, update="efm_bd_update",
-         knobs=(("Mod", "MOD", 64), ("Mod Freq", "MFRQ", 64), ("Ramp", "RAMP", 64), ("Ramp Decay", "RDEC", 55))),
-    dict(name="EfmSD", image=1, decay=55, update="efm_sd_update",
-         knobs=(("Mod", "MOD", 64), ("Mod Freq", "MFRQ", 32), ("Noise", "NOIS", 64), ("Noise Decay", "NDEC", 64))),
+    dict(name="TrxSD", image=1, decay=32, update="trx_sd_update",
+         knobs=(("Snap", "SNAP", 64), ("Tone", "TONE", 64), ("Bump", "BUMP", 0), ("Bump Env", "BENV", 64))),
 )
 RENDER = "md_render32"
 # SRAM interne (notes/28) : comme les moteurs du Syntakt, à la place des tables d'ondes de CHORD (recopiées dans la
 # charge utile, CHORD_PTRS réécrits). Le crochet de démarrage (stub.S, SRAM_RUN_AT / SRAM2_RUN_AT) recopie le début de
 # la charge utile dans les deux zones. Zone 1 : tout notre code, le filtre et les petites tables (exécutés et lus à
 # chaque bloc : hors du cache d'instructions de 8 Ko et de la SDRAM) ; zone 2 : l'état des pistes. Le sinus (128 Ko)
-# reste en SDRAM, après la place des deux zones.
+# et l'échantillon d'attaque de TrxSD (16 Ko, lu dans l'ordre) restent en SDRAM, après la place des deux zones.
 (SRAM1, SRAM1_END), (SRAM2, SRAM2_END) = gs.CHORD_BANKS
 SRAM1_LEN, SRAM2_LEN = SRAM1_END - SRAM1, SRAM2_END - SRAM2
 SINE_OFF = (SRAM1_LEN + SRAM2_LEN + 0xff) & ~0xff     # le sinus, en SDRAM, après la place de transit des deux zones
-CHORD_OFF = 0x28000                                   # tables d'ondes de CHORD (30 Ko), sous gs.STUBS
+CHORD_OFF = 0x36000                                   # tables d'ondes de CHORD (30 Ko), après les enregistrements
+CHORD_LEN = sum(hi - lo for lo, hi in gs.CHORD_BANKS)
 LINK = """SECTIONS
 {{
-  .sdram {sine:#x} : {{ *(.rodata.trx_b2_sine) }}
+  .sdram {sine:#x} : {{ *(.rodata.trx_b2_sine) *(.rodata.sd_snap) }}
   .sram {sram1:#x} : AT({code:#x}) {{ *(.text.md_render32) *(.text*) . = ALIGN(4); *(.rodata*) *(.data*) }}
   .sram2 {sram2:#x} (NOLOAD) : {{ *(.bss*) *(COMMON) }}
   /DISCARD/ : {{ *(.comment) *(.note*) *(.eh_frame*) }}
@@ -99,7 +97,7 @@ def compile_machines(tmp, md_syx, pay):
     en SDRAM. Rend (octets de pay jusqu'à la fin du sinus, symboles aux adresses d'exécution)."""
     gen = headers.write(md_syx, tmp / "gen")
     objs = []
-    for src in (SRC / "bridge.c", SRC / "trx_b2.c", SRC / "efm.c", gen / "trx_b2_md.c"):
+    for src in (SRC / "bridge.c", SRC / "trx_b2.c", SRC / "trx_sd.c", gen / "trx_b2_md.c"):
         o = tmp / (src.stem + ".o")
         gx.run([gx.CROSS + "gcc", *CFLAGS, f"-I{SRC}", f"-I{gen}", "-c", str(src), "-o", str(o)])
         objs.append(o)
@@ -118,8 +116,8 @@ def compile_machines(tmp, md_syx, pay):
         raise SystemExit(f"!! sections inattendues : {sorted(extra)}")
     if secs[".sram"][1] > SRAM1_LEN or secs.get(".sram2", (0, 0))[1] > SRAM2_LEN:
         raise SystemExit(f"!! SRAM : {secs['.sram'][1]} o / {SRAM1_LEN}, {secs.get('.sram2', (0, 0))[1]} o / {SRAM2_LEN}")
-    if secs[".sdram"][1] != 4 * 32768:
-        raise SystemExit("!! sinus")
+    if secs[".sdram"][1] != 4 * (32768 + 4096):
+        raise SystemExit("!! sinus et échantillon d'attaque")
     undef = [l for l in gx.run([gx.CROSS + "nm", "-u", str(elf)]).splitlines() if l.strip()]
     if undef:
         raise SystemExit(f"!! symboles non résolus : {undef}")
@@ -130,7 +128,7 @@ def compile_machines(tmp, md_syx, pay):
         p_ = line.split()
         if len(p_) == 3:
             syms[p_[2]] = int(p_[0], 16)
-    if len(blob) != SINE_OFF + 4 * 32768 or pay + len(blob) > pay + CHORD_OFF:
+    if len(blob) != SINE_OFF + 4 * (32768 + 4096) or len(blob) > gs.LAYOUT["STUBS"]:
         raise SystemExit(f"!! charge utile : {len(blob)} o")
     return blob, syms, dict(sram=secs[".sram"][1], sram2=secs.get(".sram2", (0, 0))[1])
 
@@ -266,7 +264,7 @@ def build_tweak(img, md_syx=None):
         struct.pack_into(">I", final, alg, top << 8)
         reloc = [[f"{gs.DESCN + k:#x}", orig[k:k + 4].hex(), final[k:k + 4].hex()]
                  for k in range(0, len(final), 4) if final[k:k + 4] != orig[k:k + 4]]
-        size = gm.BSS_OFF                       # jusqu'aux enregistrements des machines (gs.RECS) compris
+        size = (CHORD_OFF + CHORD_LEN + 3) & ~3   # jusqu'aux tables d'ondes de CHORD comprises
         segs = gs.segments(parts, size)
         at = BASE + gx.IMAGE_LEN
         if at + sum(n_ for _, n_ in segs) > gs.END_LIMIT:
@@ -301,9 +299,9 @@ def build_tweak(img, md_syx=None):
     out = {
         "id": TID,
         "order": 26,
-        "name": "Machines du Machinedrum : TrxB2, EfmBD, EfmSD (OS 1.63), à l'échantillon près",
+        "name": "Machines du Machinedrum : TrxB2, TrxSD (OS 1.63), à l'échantillon près",
         "description": [
-            "TRX-B2, EFM-BD et EFM-SD du Machinedrum en 7e, 8e et 9e machines : le code du DSP A du Machinedrum porté",
+            "TRX-B2 et TRX-SD du Machinedrum en 7e et 8e machines : le code du DSP A du Machinedrum porté",
             "en C, identique à l'échantillon près (comparé au DSP émulé), rendu à 44,1 kHz puis ramené à 48 kHz",
             "(filtre polyphase 160/147). PITCH = PTCH (+ note du trig), DECAY = DEC ; le reste : tools/machines/md/",
             "bridge.c. Généré par tools/gen_md_machines.py. Aucun octet Elektron : build.py --md lit le sinus et les",

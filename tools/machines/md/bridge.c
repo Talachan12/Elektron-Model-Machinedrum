@@ -1,7 +1,8 @@
 /*
  * Machines du Machinedrum (OS 1.63) ajoutees au Model:Cycles (OS 1.13), portees a l'echantillon pres depuis le code
- * du DSP A du Machinedrum : TrxB2 (trx_b2.c), EfmBD et EfmSD (efm.c). Les tables du Machinedrum sont lues au build
- * dans le fichier OS du Machinedrum de l'utilisateur ; le sinus est recalcule par l'algorithme du DSP (md_sine.py).
+ * du DSP A du Machinedrum : TrxB2 (trx_b2.c) et TrxSD (trx_sd.c). Les tables et l'echantillon d'attaque du
+ * Machinedrum sont lus au build dans le fichier OS du Machinedrum de l'utilisateur ; le sinus est recalcule par
+ * l'algorithme du DSP (md_sine.py).
  *
  * Contrat de la boucle des voix (notes/14, comme MACRO) : update(pmod, v, p) puis render(out, v), une fois par
  * bloc de 32 trames a 48 kHz. p = parametres de la piste (mots 8.8 : +0x14 PITCH, +0x16 COLOR, +0x18 SHAPE,
@@ -13,12 +14,11 @@
  *
  * Potards (PITCH = PTCH + note du trig - 60, DECAY = DEC pour toutes) :
  *   TrxB2 : SWEEP = RAMP, CONTOUR = HOLD, COLOR = DIST, SHAPE = DIRT, PUNCH = TICK 64 (sinon 0) ; NOIS = 0.
- *   EfmBD : SWEEP = RAMP, CONTOUR = RDEC, COLOR = MOD, SHAPE = MFRQ ; MDEC = 32 ; MFB = 127, 0 avec PUNCH.
- *   EfmSD : SWEEP = NOIS, CONTOUR = NDEC, COLOR = MOD, SHAPE = MFRQ ; MDEC = 44 ; HPF = 16, 64 avec PUNCH.
+ *   TrxSD : COLOR = SNAP, SHAPE = TONE, SWEEP = BUMP, CONTOUR = BENV, PUNCH = CLIP 64 (sinon 0) ; TUNE = 64.
  * Sans PUNCH, les valeurs fixes sont les defauts du Machinedrum.
  */
 #include "trx_b2.h"
-#include "efm.h"
+#include "trx_sd.h"
 #include "rs_coef.h"
 
 typedef signed char s8;
@@ -34,7 +34,7 @@ typedef uint32_t u32;
 #define MARK        0x4d440000                       /* 'MD' + machine : marque de la voix initialisee */
 #define TRIG_NOTE0  60                               /* note du trig qui laisse PTCH = PITCH */
 
-enum { M_B2, M_BD, M_SD };
+enum { M_B2, M_SD };
 
 #define V32(o)      (*(s32 *)(v + (o)))
 #define P16(o)      (*(const s16 *)(p + (o)))
@@ -45,8 +45,7 @@ struct track {
 	s32 kind;
 	union {
 		trx_b2_t b2;
-		efm_bd_t bd;
-		efm_sd_t sd;
+		trx_sd_t sd;
 	} u;
 	/* 44,1 kHz : historique du filtre puis le dernier bloc, arrondis a 16 bits pour le filtre (muls.w) ; l'erreur
 	 * (1/2 bit de poids 2^8 sur 24 bits) reste vers -90 dB sous la pleine echelle */
@@ -79,10 +78,8 @@ static void track_init(struct track *t, s32 kind)
 	t->kind = kind;
 	if (kind == M_B2)
 		trx_b2_init(&t->u.b2);
-	else if (kind == M_BD)
-		efm_bd_init(&t->u.bd);
 	else
-		efm_sd_init(&t->u.sd);
+		trx_sd_init(&t->u.sd);
 	for (k = 0; k < HIST + TRX_B2_BLOCK; k++)
 		t->xh[k] = 0;
 	t->n = HIST;
@@ -114,28 +111,20 @@ static void update(s32 kind, s32 pmod, char *v, const char *p)
 		k[5] = 0;
 		k[6] = knob(P16(0x18));
 		k[7] = knob(P16(0x16));
-	} else if (kind == M_BD) {                       /* PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB */
+	} else {                                         /* PTCH DEC BUMP BENV SNAP TONE TUNE CLIP */
 		k[2] = knob(P16(0x1a));
 		k[3] = knob(P16(0x1c));
 		k[4] = knob(P16(0x16));
 		k[5] = knob(P16(0x18));
-		k[6] = 32;
-		k[7] = punch ? 0 : 127;
-	} else {                                         /* PTCH DEC NOIS NDEC MOD MFRQ MDEC HPF */
-		k[2] = knob(P16(0x1a));
-		k[3] = knob(P16(0x1c));
-		k[4] = knob(P16(0x16));
-		k[5] = knob(P16(0x18));
-		k[6] = 44;
-		k[7] = punch ? 64 : 16;
+		k[6] = 64;
+		k[7] = punch ? 64 : 0;
 	}
 	if (V32(0x38))
 		t->trig = 1;
 }
 
 void trx_b2_update(s32 pmod, char *v, const char *p) { update(M_B2, pmod, v, p); }
-void efm_bd_update(s32 pmod, char *v, const char *p) { update(M_BD, pmod, v, p); }
-void efm_sd_update(s32 pmod, char *v, const char *p) { update(M_SD, pmod, v, p); }
+void trx_sd_update(s32 pmod, char *v, const char *p) { update(M_SD, pmod, v, p); }
 
 /* un bloc du Machinedrum : l'OS envoie les parametres, puis le DSP joue le trig et rend 32 echantillons */
 static void md_block(struct track *t)
@@ -152,16 +141,11 @@ static void md_block(struct track *t)
 		if (t->trig)
 			trx_b2_trig(&t->u.b2);
 		k = trx_b2_render(&t->u.b2, x);
-	} else if (t->kind == M_BD) {
-		efm_bd_set_knobs(&t->u.bd, t->knobs);
-		if (t->trig)
-			efm_bd_trig(&t->u.bd);
-		k = efm_bd_render(&t->u.bd, x);
 	} else {
-		efm_sd_set_knobs(&t->u.sd, t->knobs);
+		trx_sd_set_knobs(&t->u.sd, t->knobs);
 		if (t->trig)
-			efm_sd_trig(&t->u.sd);
-		k = efm_sd_render(&t->u.sd, x);
+			trx_sd_trig(&t->u.sd);
+		k = trx_sd_render(&t->u.sd, x);
 	}
 	t->trig = 0;
 	if (!k) {                                        /* bloc muet (exactement nul) */
@@ -180,7 +164,7 @@ static void md_block(struct track *t)
 	t->n += TRX_B2_BLOCK;
 }
 
-/* rendu commun aux trois machines (la table render de l'OS a une entree par machine) */
+/* rendu commun aux machines (la table render de l'OS a une entree par machine) */
 void md_render32(s32 *out, char *v)
 {
 	struct track *t = track_of(v);

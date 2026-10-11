@@ -28,8 +28,6 @@ typedef struct {
  * Sinus de 32 768 points tel que le DSP le construit en $148000 (md_sine.py) ; tables de la fonction 0x201fd2. */
 extern const int32_t trx_b2_sine[32768];
 extern const int32_t trx_b2_pitch_tbl[128], trx_b2_dec_tbl[128], trx_b2_hold_tbl[128], trx_b2_dirt_tbl[128];
-/* table 0x24bf94 + 0x24c : decroissances des machines EFM (efm.c), 326 valeurs */
-extern const int32_t md_lut[326];
 
 void trx_b2_init(trx_b2_t *v);
 /* knobs: PTCH DEC RAMP HOLD TICK NOIS DIRT DIST, 0..127 each */
