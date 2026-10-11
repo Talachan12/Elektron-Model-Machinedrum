@@ -34,8 +34,7 @@ You only need Python 3: no compiler, no extra packages.
    python3 tools/build.py -i model-cycles_OS1.13.syx -t md-machines --md Elektron_SPS1-1UW_OS1.63.syx
    ```
 3. Check the result. The patched MAIN OS SHA-256 must be
-   `87c36b3d56c5f76d4ae8c49c3217991894f39ff3af37bf51c534cd0f824d53e6
-foi)`. The build writes
+   `87c36b3d56c5f76d4ae8c49c3217991894f39ff3af37bf51c534cd0f824d53e6`. The build writes
    `model-cycles_OS1.13_mod.syx`.
 4. Flash it as described in [FLASH.md](FLASH.md). You need a MIDI interface on the Cycles' **MIDI IN** (TRS jack):
    it is also your way back to the official OS (STARTUP MENU). Back up your projects first.
