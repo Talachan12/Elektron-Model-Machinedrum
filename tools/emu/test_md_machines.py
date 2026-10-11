@@ -229,6 +229,21 @@ def stock_unchanged(stock, fw):
                                             "nos machines jamais appelées")
 
 
+def mixed(fw):
+    """5 pistes d'origine + une de nos machines sur la 6e : les 5 pistes d'origine sortent exactement comme sans elle
+    (notre code n'abîme ni l'EMAC ni rien d'autre de la boucle des voix)."""
+    def run(m6):
+        e = fw.engine()
+        for t in range(5):
+            e.set(t, **dict(BASE_KW, machine=t, color=64, shape=64, contour=64, decay=60))
+        e.set(5, **dict(BASE_KW, machine=m6, decay=100))
+        return np.stack([e.block(0x3f if b in (1, 30, 61) else 0) for b in range(90)])
+    ref = run(TMc.OFF)
+    bad = [NAMES[m] for m in range(len(NAMES)) if not np.array_equal(run(FIRST + m)[:, :5], ref[:, :5])]
+    check(not bad and ref[:, :5].any(), f"5 pistes d'origine jouées avec chacune de nos machines sur la 6e : "
+                                        f"identiques à l'échantillon près {bad}")
+
+
 def cost(fw):
     e = fw.engine(solo=0)
     e.set(0, **dict(BASE_KW, machine=0, color=10, shape=16, sweep=16, contour=24, decay=28))
@@ -258,7 +273,7 @@ def main():
     print("2. interface"); interface(stock, fw)
     with tempfile.TemporaryDirectory() as d:
         ref = HostRef(pathlib.Path(d), pathlib.Path(args.md).resolve())
-        print("3. son"); sound(fw, ref); stock_unchanged(stock, fw)
+        print("3. son"); sound(fw, ref); stock_unchanged(stock, fw); mixed(fw)
     print("4. coût"); cost(fw)
     fails = TMc.t7.FAIL if hasattr(TMc.t7, "FAIL") else []
     print("ÉCHECS :" if fails else "tout est bon", fails or "")

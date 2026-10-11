@@ -16,8 +16,37 @@
 static inline int32_t s24(uint32_t v) { return (int32_t)(v << 8) >> 8; }
 static inline int32_t sat24(int32_t v) { return v > 0x7fffff ? 0x7fffff : (v < -0x800000 ? -0x800000 : v); }
 
-/* floor(x y / 2^23) (et x y mod 2^23 dans *lo), x et y sur 24 bits : moities de 12 bits, 3 multiplications
- * (Karatsuba), chaque produit tient sur 32 bits */
+/* floor(x y / 2^23) (et x y mod 2^23 dans *lo), x et y sur 24 bits.
+ * ColdFire : l'EMAC de la boucle des voix (MACSR = 0xa0 : fractionnaire signe, troncature) donne, pour
+ * (x << 8) * (y << 8), floor(x y / 2^15) en une instruction (mac.l puis movclr.l, qui laisse ACC0 a zero) ; muls.l
+ * donne les 32 bits du bas : les deux couvrent le produit exact de 47 bits (jamais -1 * -1 ici).
+ * Ordinateur : moities de 12 bits, 3 multiplications (Karatsuba). */
+#if defined(__mcoldfire__)
+static inline int32_t prod15(int32_t x, int32_t y)
+{
+	int32_t r;
+	__asm__ volatile ("mac.l %1,%2,%%acc0\n\tmovclr.l %%acc0,%0" : "=d"(r) : "d"(x << 8), "d"(y << 8));
+	return r;
+}
+
+static inline int32_t hilo(int32_t x, int32_t y, int32_t *lo)
+{
+	*lo = (int32_t)((uint32_t)x * (uint32_t)y) & 0x7fffff;
+	return prod15(x, y) >> 8;
+}
+
+static inline int32_t hi23(int32_t x, int32_t y)
+{
+	return prod15(x, y) >> 8;
+}
+
+static inline void emac_begin(void)                      /* ACC0 a zero (mac.l l'accumule) */
+{
+	int32_t r;
+	__asm__ volatile ("movclr.l %%acc0,%0" : "=d"(r));
+	(void)r;
+}
+#else
 static inline int32_t hilo(int32_t x, int32_t y, int32_t *lo)
 {
 	const int32_t xh = x >> 12, xl = x & 0xfff, yh = y >> 12, yl = y & 0xfff;
@@ -31,6 +60,11 @@ static inline int32_t hi23(int32_t x, int32_t y)
 	int32_t lo;
 	return hilo(x, y, &lo);
 }
+
+static inline void emac_begin(void)
+{
+}
+#endif
 
 /* mpyr x,y : a1 apres l'arrondi convergent (sans repliement : 0x800000 possible) */
 static inline int32_t rnd(int32_t x, int32_t y)
@@ -149,6 +183,7 @@ void efm_bd_trig(efm_bd_t *v)                            /* $102ef3 */
 
 int efm_bd_render(efm_bd_t *v, int32_t out[EFM_BLOCK])  /* $102f06 */
 {
+	emac_begin();
 	const int32_t p1 = v->p[1], p2 = v->p[2], p3 = v->p[3], p4 = v->p[4], p5 = v->p[5], p6 = v->p[6];
 	const int32_t p8 = v->p[8];
 	int i;
@@ -235,6 +270,7 @@ static void noise(efm_sd_t *v, int32_t nz[EFM_BLOCK])
 
 int efm_sd_render(efm_sd_t *v, int32_t out[EFM_BLOCK])  /* $102f85 */
 {
+	emac_begin();
 	const int32_t p1 = v->p[1], p2 = v->p[2], p3 = v->p[3], p4 = v->p[4], p5 = v->p[5], p6 = v->p[6];
 	const int32_t p7 = v->p[7], p8 = v->p[8];
 	int32_t nz[EFM_BLOCK];
