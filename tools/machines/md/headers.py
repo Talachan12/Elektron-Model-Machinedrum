@@ -18,8 +18,8 @@ ARRAYS = {"sine": ("trx_b2_sine", 32768), "pitch": ("trx_b2_pitch_tbl", 128), "d
           "hold": ("trx_b2_hold_tbl", 128), "dirt": ("trx_b2_dirt_tbl", 128),
           "sd_dec1": ("sd_dec1", 128), "sd_dec2": ("sd_dec2", 128), "sd_benv": ("sd_benv", 128),
           "sd_clip": ("sd_clip", 128), "sd_k1": ("sd_k1", 128), "sd_k2": ("sd_k2", 128), "sd_snap": ("sd_snap", 4096),
-          "ch_gap": ("ch_gap", 128), "ch_lk1": ("ch_lk1", 128), "ch_lk2": ("ch_lk2", 128),
-          "ch_hk1": ("ch_hk1", 128), "ch_hk2": ("ch_hk2", 128), "ch_dk": ("ch_dk", 2)}
+          "ch_gap": ("ch_gap", 128), "ch_q1": ("ch_q1", 128), "ch_q2": ("ch_q2", 128),
+          "ch_t1": ("ch_t1", 960), "ch_t2": ("ch_t2", 960), "ch_dk": ("ch_dk", 2)}
 PLACEHOLDER = 0x5a5a5a5a
 
 

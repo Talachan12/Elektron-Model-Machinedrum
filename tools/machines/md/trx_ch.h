@@ -14,13 +14,12 @@ typedef struct {
 	int32_t f2[4];         /* y25..y28 : filtre 2 (x[-2], x[-1], y[-2], y[-1]) */
 	int32_t f3[4];         /* y29..y32 : filtre 3 */
 	int32_t pos[6];        /* y33..y38 : phases des 6 oscillateurs carres */
-	unsigned char lpf, hpf; /* potards des filtres 1 et 2 (y3, y6 : index des tables ch_lk*, ch_hk*) */
 	unsigned char dec;     /* DEC du dernier reglage (y10 n'est envoye qu'au trig) */
 } trx_ch_t;
 
-/* knobs : GAP DEC HPF LPF MTAL, 0..127 */
+/* knobs : GAP DEC HPF LPF MTAL, 0..127, puis Q (0x46 sur le Machinedrum : resonance des filtres 1 et 2) */
 void trx_ch_init(trx_ch_t *v);
-void trx_ch_set_knobs(trx_ch_t *v, const uint8_t k[5]);
+void trx_ch_set_knobs(trx_ch_t *v, const uint8_t k[6]);
 void trx_ch_trig(trx_ch_t *v);
 int trx_ch_render(trx_ch_t *v, int32_t out[TRX_CH_BLOCK]);
 

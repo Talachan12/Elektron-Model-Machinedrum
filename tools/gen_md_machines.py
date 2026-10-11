@@ -53,9 +53,9 @@ MACHINES = (
          knobs=(("Distortion", "DIST", 0), ("Dirt", "DIRT", 0), ("Ramp", "RAMP", 96), ("Hold", "HOLD", 64))),
     dict(name="TrxSD", image=1, decay=32, update="trx_sd_update",
          knobs=(("Snap", "SNAP", 64), ("Tone", "TONE", 64), ("Bump", "BUMP", 0), ("Bump Env", "BENV", 64))),
-    # TRX-CH : PITCH = LPF (défaut 64), SWEEP ne sert pas
+    # TRX-CH : PITCH = LPF (défaut 64) ; SWEEP = Q, résonance des filtres (70 : celle du Machinedrum)
     dict(name="TrxCH", image=2, decay=32, update="trx_ch_update",
-         knobs=(("Metal", "MTAL", 64), ("High Pass", "HPF", 64), ("Unused", "-", 0), ("Gap", "GAP", 32))),
+         knobs=(("Metal", "MTAL", 64), ("High Pass", "HPF", 64), ("Resonance", "RES", 70), ("Gap", "GAP", 32))),
 )
 RENDER = "md_render32"
 # SRAM interne (notes/28) : comme les moteurs du Syntakt, à la place des tables d'ondes de CHORD (recopiées dans la
@@ -120,7 +120,7 @@ def compile_machines(tmp, md_syx, pay):
         raise SystemExit(f"!! sections inattendues : {sorted(extra)}")
     if secs[".sram"][1] > SRAM1_LEN or secs.get(".sram2", (0, 0))[1] > SRAM2_LEN:
         raise SystemExit(f"!! SRAM : {secs['.sram'][1]} o / {SRAM1_LEN}, {secs.get('.sram2', (0, 0))[1]} o / {SRAM2_LEN}")
-    if secs[".sdram"][1] != 4 * (32768 + 4096 + 5 * 128 + 2):
+    if secs[".sdram"][1] != 4 * (32768 + 4096 + 3 * 128 + 2 * 960 + 2):
         raise SystemExit("!! sinus, échantillon d'attaque et tables de TrxCH")
     undef = [l for l in gx.run([gx.CROSS + "nm", "-u", str(elf)]).splitlines() if l.strip()]
     if undef:

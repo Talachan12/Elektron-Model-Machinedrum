@@ -6,7 +6,8 @@
  * Synthese : un bruit de Fibonacci (niveau : MTAL) et six carres de periodes fixes (114, 102, 86, 80, 58 et 52
  * echantillons ; niveau : MTAL), puis deux resonateurs en cascade (accordes par LPF), un passe-haut (HPF) et un
  * passe-haut fixe ; l'enveloppe tient un bloc, descend lineairement pendant 2 DEC blocs, puis decroit d'un facteur
- * fixe par echantillon (GAP).
+ * fixe par echantillon (GAP). En plus du Machinedrum : Q (y4 = y7 = 0x46 sur le Machinedrum), l'index de la table
+ * qui regle la resonance des filtres 1 et 2 ; Q = 0x46 donne exactement le TRX-CH.
  */
 #include "trx_ch.h"
 #include "md_data.h"
@@ -16,7 +17,7 @@
 
 static const unsigned char osc_len[6] = { 114, 102, 86, 80, 58, 52 }, osc_hi[6] = { 72, 51, 43, 40, 29, 26 };
 
-void trx_ch_set_knobs(trx_ch_t *v, const uint8_t k[5])   /* 0x201800 ; y9, y10 : au trig (trx_ch_trig) */
+void trx_ch_set_knobs(trx_ch_t *v, const uint8_t k[6])   /* 0x201800 ; y9, y10 : au trig (trx_ch_trig) */
 {
 	const int32_t hpf = k[2] << 7, lpf = k[3] << 7, mtal = k[4] << 7;
 
@@ -24,12 +25,10 @@ void trx_ch_set_knobs(trx_ch_t *v, const uint8_t k[5])   /* 0x201800 ; y9, y10 :
 	v->p[2] = m_s24((uint32_t)ch_gap[k[0]]);
 	v->p[3] = ((lpf * 0xac77) >> 22) + 0x680;
 	v->p[6] = ((hpf * 0x2d83) >> 20) + 0x600;
-	v->p[4] = 0x46;
-	v->p[7] = 0x46;
+	v->p[4] = k[5];                                      /* 0x46 sur le Machinedrum */
+	v->p[7] = k[5];
 	v->p[5] = 0x80000 - mtal * 25;
 	v->p[8] = mtal * 14 + 0x10000;
-	v->lpf = k[3];
-	v->hpf = k[2];
 	v->dec = k[1];
 }
 
@@ -162,8 +161,8 @@ int trx_ch_render(trx_ch_t *v, int32_t out[TRX_CH_BLOCK])   /* $10204d */
 		}
 		v->pos[i] = p;
 	}
-	resonators(ch_lk1[v->lpf], ch_lk2[v->lpf], v->f1, x);
-	highpass(ch_hk1[v->hpf], ch_hk2[v->hpf], v->f2, x);
+	resonators(ch_t1[v->p[3] + ch_q1[v->p[4]] - CH_LO], ch_t2[v->p[3] + ch_q2[v->p[4]] - CH_LO], v->f1, x);
+	highpass(ch_t1[v->p[6] + ch_q1[v->p[7]] - CH_LO], ch_t2[v->p[6] + ch_q2[v->p[7]] - CH_LO], v->f2, x);
 	highpass(ch_dk[0], ch_dk[1], v->f3, x);
 	/* $1021b7 : enveloppe (tenue d'un bloc, descente lineaire, puis decroissance GAP) ; sortie env x / 2 */
 	e = v->env;

@@ -16,7 +16,7 @@
  *   TrxB2 : SWEEP = RAMP, CONTOUR = HOLD, COLOR = DIST, SHAPE = DIRT, PUNCH = TICK 64 (sinon 0) ; NOIS = 0.
  *   TrxSD : COLOR = SNAP, SHAPE = TONE, SWEEP = BUMP, CONTOUR = BENV, PUNCH = CLIP 64 (sinon 0) ; TUNE = 64.
  *   TrxCH : PITCH = LPF (accord des resonateurs, + note du trig - 60), COLOR = MTAL, SHAPE = HPF, CONTOUR = GAP ;
- *           pas de PTCH sur le Machinedrum ; SWEEP et PUNCH ne servent pas.
+ *           pas de PTCH sur le Machinedrum ; SWEEP = Q (resonance, 70 = le Machinedrum) ; PUNCH ne sert pas.
  * Sans PUNCH, les valeurs fixes sont les defauts du Machinedrum.
  */
 #include "trx_b2.h"
@@ -122,6 +122,7 @@ static void update(s32 kind, s32 pmod, char *v, const char *p)
 		k[0] = knob(P16(0x1c));                      /* GAP <- CONTOUR */
 		k[2] = knob(P16(0x18));                      /* HPF <- SHAPE */
 		k[4] = knob(P16(0x16));                      /* MTAL <- COLOR */
+		k[5] = knob(P16(0x1a));                      /* Q <- SWEEP (0x46 sur le Machinedrum) */
 	} else {                                         /* PTCH DEC BUMP BENV SNAP TONE TUNE CLIP */
 		k[2] = knob(P16(0x1a));
 		k[3] = knob(P16(0x1c));

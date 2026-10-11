@@ -98,6 +98,9 @@ def _s24(v):
     return v - (1 << 24) if v & 0x800000 else v
 
 
+CH_LO, CH_HI = 0x380, 0x740                 # tranches des coefficients de TRX-CH (index - CH_LO)
+
+
 def tables(path):
     cf, sha = coldfire_os(path)
     if sha != OS_SHA256:
@@ -118,18 +121,20 @@ def tables(path):
     out["sd_k1"] = [_s24(dsp["X"][0x140900 + 0x400 + 4 * k - 3]) for k in range(128)]
     out["sd_k2"] = [_s24(dsp["X"][0x141900 + 0x400 + 4 * k - 0x241]) for k in range(128)]
     out["sd_snap"] = [_s24(dsp["P"][0x100881 + i]) for i in range(4096)]
-    # TRX-CH (ColdFire 0x201800 : GAP ; DSP A P:$10201f) : coefficients de ses 3 filtres, x:$140900 / x:$141900 a
-    # f + x:$140000[q] / f + x:$140080[q] : filtre 1 (f = LPF, q = 0x46), filtre 2 (f = HPF, q = 0x46), filtre 3
-    # (f = 0x30, q = 0)
+    # TRX-CH (ColdFire 0x201800 : GAP ; DSP A P:$10201f) : ses filtres 1 et 2 lisent K1 = x:$140900[f + x:$140000[q]],
+    # K2 = x:$141900[f + x:$140080[q]] (f = LPF ou HPF, q = 0x46 sur le Machinedrum, ici SWEEP) : les deux tranches
+    # utiles (CH_LO..CH_HI) et les décalages ; le filtre 3 est fixe (f = 0x30, q = 0)
     out["ch_gap"] = [s32(at(0x24bf94 + 0x38c + 4 * (((k << 7) >> 8) & 0xff), 4)) for k in range(128)]
     X = dsp["X"]
-    kk = lambda f, q: (_s24(X[(0x140900 + f + _s24(X[0x140000 + q])) & 0xffffff]),
-                       _s24(X[(0x141900 + f + _s24(X[0x140080 + q])) & 0xffffff]))
-    lp = [kk((((k << 7) * 0xac77) >> 22) + 0x680, 0x46) for k in range(128)]
-    hp = [kk((((k << 7) * 0x2d83) >> 20) + 0x600, 0x46) for k in range(128)]
-    out["ch_lk1"], out["ch_lk2"] = [a for a, _ in lp], [b for _, b in lp]
-    out["ch_hk1"], out["ch_hk2"] = [a for a, _ in hp], [b for _, b in hp]
-    out["ch_dk"] = list(kk(0x30, 0))
+    out["ch_q1"] = [_s24(X[0x140000 + q]) for q in range(128)]
+    out["ch_q2"] = [_s24(X[0x140080 + q]) for q in range(128)]
+    fs = [(((k << 7) * 0xac77) >> 22) + 0x680 for k in range(128)] + [(((k << 7) * 0x2d83) >> 20) + 0x600 for k in range(128)]
+    lo, hi = min(fs) + min(out["ch_q1"] + out["ch_q2"]), max(fs) + max(out["ch_q1"] + out["ch_q2"])
+    if lo < CH_LO or hi >= CH_HI:
+        raise SystemExit("!! TRX-CH : index de filtre hors des tranches lues")
+    out["ch_t1"] = [_s24(X[0x140900 + i]) for i in range(CH_LO, CH_HI)]
+    out["ch_t2"] = [_s24(X[0x141900 + i]) for i in range(CH_LO, CH_HI)]
+    out["ch_dk"] = [_s24(X[0x140900 + 0x30 + out["ch_q1"][0]]), _s24(X[0x141900 + 0x30 + out["ch_q2"][0]])]
     return out, sha
 
 

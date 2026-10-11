@@ -52,7 +52,7 @@ You only need Python 3: no compiler, no extra packages.
    python3 tools/build.py -i model-cycles_OS1.13.syx -t md-machines --md Elektron_SPS1-1UW_OS1.63.syx
    ```
 3. Check the result. The patched MAIN OS SHA-256 must be
-   `2a5da970bb62c03488da2999ad770fd79a4d36fd007a93d62bce6a35149a002c`. The build writes
+   `ecffe87484d7254f87e4526a1eb506a3d9a9b699e1c2719d535b0cec0309ed27`. The build writes
    `model-cycles_OS1.13_mod.syx`.
 
 ### Flash
@@ -68,12 +68,17 @@ On TrxB2 and TrxSD, PITCH plus (trig note − 60) gives the MD's PTCH, on the sa
 there, PITCH plus (trig note − 60) gives LPF, the tuning of its resonant filter. DECAY gives the MD's DEC on all
 three. When PUNCH is off, the fixed values are the Machinedrum defaults.
 
+TrxCH gets one extra control the Machinedrum does not expose. SWEEP sets the resonance of its two filters. The MD
+always uses index 70 of the DSP's own resonance table, and SWEEP 0..127 picks any index of that table. At 70
+the sound is exactly the Machinedrum's. Lower values give a darker, quieter hat; higher values give a brighter,
+louder ring.
+
 | Cycles | TrxB2 | TrxSD | TrxCH |
 |---|---|---|---|
 | PITCH | PTCH | PTCH | LPF (resonant filter) |
 | COLOR | DIST | SNAP (noise and attack sample) | MTAL (noise ↔ six square oscillators) |
 | SHAPE | DIRT | TONE (mix of the two oscillators) | HPF |
-| SWEEP | RAMP | BUMP | – |
+| SWEEP | RAMP | BUMP | RES: filter resonance, not on the Machinedrum (70 = the MD sound) |
 | CONTOUR | HOLD | BENV | GAP (length of the tail) |
 | PUNCH off / on | TICK 0 / 64 | CLIP 0 / 64 | – |
 | fixed | NOIS 0 | TUNE 64 | |
@@ -82,7 +87,7 @@ three. When PUNCH is off, the fixed values are the Machinedrum defaults.
 
 - The C cores (`tools/machines/md/trx_b2.c`, `trx_sd.c`, `trx_ch.c`) were compared with the original DSP56303 code run
   in the [dsp56300](https://github.com/dsp56300/dsp56300) emulator. Every sample is identical for TRX-B2 across 409
-  settings, for TRX-SD across 304 and for TRX-CH across 316 (every knob, extremes, retrigs, silence, 3000-block tails).
+  settings, for TRX-SD across 304 and for TRX-CH across 404 plus 12 3000-block tails (every knob, extremes, retrigs, silence).
 - TRX-SD has a line-by-line reference (`trx_sd_ref.c`, a model of the DSP's accumulators, X/Y memory and address
   registers) and a fast version; both give the same samples as the DSP.
 - The Machinedrum runs at 44.1 kHz and the Cycles at 48 kHz. The machines render exactly like the MD at 44.1 kHz,
