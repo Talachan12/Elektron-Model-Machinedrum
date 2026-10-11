@@ -1,135 +1,196 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Modded Cycles</title>
-<meta name="description" content="Firmware mods for the Elektron Model:Cycles: 6-channel USB audio, Syntakt engines, latching mute, trig preview. Patched in your browser from your own OS file.">
-<meta name="theme-color" content="#e3e2de" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1b1b1b" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Tiny5&display=swap">
-<link rel="stylesheet" href="assets/site.css?v=2026-10-11-02">
-<script>try{var l=localStorage.getItem("mc-lang"),t=localStorage.getItem("mc-theme")}catch(e){}document.documentElement.lang=l||(/^fr\b/i.test(navigator.language||"")?"fr":"en");if(t)document.documentElement.setAttribute("data-theme",t)</script>
+<title>Machinedrum Machines Patcher</title>
+<meta name="description" content="Add the Machinedrum TRX-B2, EFM-BD and EFM-SD machines to your Model:Cycles, built in your browser from your own official firmware files.">
 <style>
-  .intro{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px 56px;align-items:end;padding:44px 0 36px}
-  .intro h1{font-size:clamp(40px,5vw,64px)}
-  .intro p{font-size:19px;line-height:1.45;max-width:34ch;margin:0 0 18px}
-  .act{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px}
-
-  .bench{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:56px;align-items:start}
-  .bench figure{margin:0;position:sticky;top:20px}
-  .bench [data-device]{max-width:calc((100vh - 275px) * 1.467)}
-  .bench figcaption{margin-top:18px;font-size:15px;color:var(--muted)}
-  .bench h2{margin:0 0 18px}
-  .mods{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-  .mods a{display:block;padding:16px 0 17px;border-bottom:1px solid var(--line);text-decoration:none}
-  .mods b{display:block;font-size:19px;letter-spacing:-.01em;margin-bottom:3px}
-  .mods span{display:block;color:var(--ink-2);font-size:16px;line-height:1.45}
-  .mods em{display:block;margin-top:6px;font-style:normal;font-size:14px;color:var(--muted)}
-  .mods a:hover b,.mods a:focus-visible b{text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:2px;text-underline-offset:.18em}
-  .mods a:focus-visible{outline-offset:0}
-
-  .release{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:12px 56px;margin-top:120px;padding-top:28px;border-top:1px solid var(--ink)}
-  .release time{display:block;color:var(--muted);margin-top:10px}
-  .release p{margin:0 0 .6em;font-size:18px}
-  .release ul{margin:0;padding-left:1.1em}
-  .release li{margin:.3em 0}
-
-  @media (hover:none){.bench figcaption{display:none}}
-  @media (max-width:900px){
-    .intro{grid-template-columns:1fr;padding:36px 0 32px}
-    .bench{grid-template-columns:1fr;gap:32px}
-    .bench figure{position:static}
-    .bench [data-device]{max-width:none}
-    .release{grid-template-columns:1fr;margin-top:80px}
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1c1c1a; --muted: #6b6a64; --line: #dedbd3;
+  --accent: #d4502a; --accent-ink: #ffffff; --ok: #2f7d4a; --bad: #b3261e; --drop: #fbf3ee;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161614; --panel: #201f1c; --ink: #ecebe6; --muted: #9c9a92; --line: #34322d;
+    --accent: #ef6a42; --accent-ink: #160b07; --ok: #6cc28a; --bad: #f2867d; --drop: #2a211d;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #161614; --panel: #201f1c; --ink: #ecebe6; --muted: #9c9a92; --line: #34322d;
+  --accent: #ef6a42; --accent-ink: #160b07; --ok: #6cc28a; --bad: #f2867d; --drop: #2a211d;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 1.7rem; margin: 0; letter-spacing: -0.01em; }
+p.lead { color: var(--muted); margin: 8px 0 24px; }
+.machines { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 24px; }
+.machines div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.machines b { display: block; font-size: 1.05rem; }
+.machines span { color: var(--muted); font-size: .85rem; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+.step h2 { font-size: 1rem; margin: 0 0 10px; }
+.drop { display: block; border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center;
+  cursor: pointer; color: var(--muted); transition: background .15s, border-color .15s; }
+.drop.over { background: var(--drop); border-color: var(--accent); }
+.drop.done { border-style: solid; border-color: var(--ok); color: var(--ink); }
+.drop input { display: none; }
+.drop small { display: block; margin-top: 4px; }
+button.go { width: 100%; padding: 12px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-weight: 600; cursor: pointer; }
+button.go:disabled { opacity: .45; cursor: not-allowed; }
+#status { margin-top: 12px; min-height: 1.5em; }
+#status.ok { color: var(--ok); }
+#status.bad { color: var(--bad); }
+a.dl { display: none; margin-top: 10px; text-align: center; padding: 12px; border-radius: 8px; border: 1px solid var(--ok);
+  color: var(--ok); font-weight: 600; text-decoration: none; }
+code { font-size: .88em; overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; }
+.note { color: var(--muted); font-size: .9rem; }
+ol { padding-left: 1.2em; margin: 0; }
+@media (max-width: 560px) { .machines { grid-template-columns: 1fr; } }
 </style>
 </head>
-<body data-page="home">
-
-<header class="wrap top">
-  <a class="brand" href="./">Modded Cycles</a>
-  <nav aria-label="Site">
-    <a href="flasher/">Flasher</a>
-    <a href="guide/">Guide</a>
-    <a href="https://github.com/18nelli18/Modded-Cycles" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://discord.gg/hWegtJZcmm" target="_blank" rel="noopener">Discord</a>
-    <a href="https://ko-fi.com/18nelli" target="_blank" rel="noopener">Ko-fi</a>
-  </nav>
-  <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button>/<button type="button" data-lang="fr" aria-pressed="false">FR</button></div>
-  <button type="button" class="theme-btn" aria-label="Dark mode"><svg class="moon" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7z"/></svg><svg class="sun" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.8v2M10 16.2v2M1.8 10h2M16.2 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4"/></svg></button>
+<body>
+<main>
+<header>
+  <h1>Machinedrum machines for the Model:Cycles</h1>
 </header>
+<p class="lead">
+  Three Machinedrum SPS-1 UW machines, ported sample for sample from its DSP, as machines 7–9 of the Model:Cycles (OS 1.13). The firmware is built here, in your browser, from your own official files. Nothing is uploaded.
+  
+</p>
+<div class="machines">
+  <div><b>TrxB2</b><span>TRX-B2 kick</span></div>
+  <div><b>EfmBD</b><span>EFM-BD FM kick</span></div>
+  <div><b>EfmSD</b><span>EFM-SD FM snare</span></div>
+</div>
 
-<main class="wrap">
-  <section class="intro">
-    <h1><span data-l="en">Transform your machine.</span><span data-l="fr">Transformez votre machine.</span></h1>
-    <div>
-      <p><span data-l="en">Flashing over USB in about 30 seconds, right in the browser.</span><span data-l="fr">Flash en USB en une trentaine de secondes, dans le navigateur.</span></p>
-      <div class="act">
-        <a class="btn" href="flasher/"><span data-l="en">Open the flasher</span><span data-l="fr">Ouvrir le flasher</span></a>
-        <a href="guide/"><span data-l="en">Read the guide</span><span data-l="fr">Lire le guide</span></a>
-      </div>
-    </div>
-  </section>
+<section class="step">
+  <h2>1. Model:Cycles OS</h2>
+  <label class="drop" id="drop-cyc">
+    <input type="file" accept=".syx" id="file-cyc">
+    <span class="what">Drop <code>model-cycles_OS1.13.syx</code> here or click</span>
+    <small>Official file from elektron.se</small>
+  </label>
+</section>
 
-  <section class="bench">
-    <figure>
-      <div data-device="seq"></div>
-      <figcaption><span data-l="en">Hover over a mod: the controls it touches light up.</span><span data-l="fr">Survolez un mod : les commandes qu'il touche s'allument.</span></figcaption>
-    </figure>
-    <div>
-      <h2><span data-l="en">The mods</span><span data-l="fr">Les mods</span></h2>
-      <ol class="mods">
-        <li><a href="guide/#usb6" data-hl="pads" data-lcd="USB AUDIO/>6 CHANNELS">
-          <b><span data-l="en">6-channel USB audio</span><span data-l="fr">Audio USB 6 canaux</span></b>
-          <span><span data-l="en">Each track gets its own USB channel: six separate stems in your DAW.</span><span data-l="fr">Chaque piste a son propre canal USB : six pistes séparées dans votre logiciel.</span></span>
-          <em><span data-l="en">Based on the work of scottmetoyer</span><span data-l="fr">D'après le travail de scottmetoyer</span></em></a></li>
-        <li><a href="guide/#mute" data-hl="track,func" data-lcd="MUTE/>LOCKED">
-          <b><span data-l="en">Latching mute</span><span data-l="fr">Mute verrouillé</span></b>
-          <span><span data-l="en">TRACK + FUNC locks the mute mode: no more holding FUNC.</span><span data-l="fr">TRACK + FUNC verrouille le mode mute : plus besoin de tenir FUNC.</span></span>
-          <em><span data-l="en">By drumkilla</span><span data-l="fr">Par drumkilla</span></em></a></li>
-        <li><a href="guide/#preview" data-hl="s5,page" data-lcd="TRIG 5/>PREVIEW">
-          <b><span data-l="en">Trig preview</span><span data-l="fr">Écoute d'un pas</span></b>
-          <span><span data-l="en">Sequencer stopped, hold a step and press PAGE to hear it.</span><span data-l="fr">Séquenceur à l'arrêt, maintenez un pas et appuyez sur PAGE pour l'entendre.</span></span>
-          <em><span data-l="en">By drumkilla</span><span data-l="fr">Par drumkilla</span></em></a></li>
-        <li><a href="guide/#scroll" data-hl="lcd" data-lcd="~Deep Ocean Pad Wash 02">
-          <b><span data-l="en">Scrolling names</span><span data-l="fr">Noms qui défilent</span></b>
-          <span><span data-l="en">Sound names too long for the screen scroll in the browser.</span><span data-l="fr">Les noms de sons trop longs pour l'écran défilent dans le navigateur.</span></span>
-          <em><span data-l="en">By drumkilla</span><span data-l="fr">Par drumkilla</span></em></a></li>
-        <li><a href="guide/#syntakt" data-hl="lcd,machines,synth" data-lcd="menu">
-          <b><span data-l="en">Syntakt engines</span><span data-l="fr">Moteurs du Syntakt</span></b>
-          <span><span data-l="en">SD VINTAGE, CP VINTAGE, SY TOY, SY BITS and SY SWARM as extra machines, read from your Syntakt OS file.</span><span data-l="fr">SD VINTAGE, CP VINTAGE, SY TOY, SY BITS et SY SWARM en machines supplémentaires, lus dans votre fichier d'OS Syntakt.</span></span></a></li>
-        <li><a href="guide/#samples" data-hl="lcd,pads" data-lcd="SAMPLES OS/>MODEL:SAMPLES">
-          <b><span data-l="en">Samples OS</span><span data-l="fr">OS Samples</span></b>
-          <span><span data-l="en">The Model:Cycles starts as a Model:Samples and plays your own samples.</span><span data-l="fr">Le Model:Cycles démarre en Model:Samples et joue vos propres samples.</span></span></a></li>
-      </ol>
-    </div>
-  </section>
+<section class="step">
+  <h2>2. Machinedrum OS</h2>
+  <label class="drop" id="drop-md">
+    <input type="file" accept=".syx" id="file-md">
+    <span class="what">Drop <code>Elektron_SPS1-1UW_OS1.63.syx</code> here or click</span>
+    <small>Official Machinedrum UW OS 1.63 from elektron.se: its tables are read at build time</small>
+  </label>
+</section>
 
-  <section class="release" id="version">
-    <div>
-      <h2>Flasher <span data-rel="version">1.0</span></h2>
-      <time data-rel="date">2026-10-01</time>
-    </div>
-    <div data-rel="changes"></div>
-  </section>
+<section class="step">
+  <h2>3. Build</h2>
+  <button class="go" id="go" disabled>Build the firmware</button>
+  <div id="status" role="status"></div>
+  <a class="dl" id="dl" download="model-cycles_OS1.13_md.syx">Download model-cycles_OS1.13_md.syx</a>
+</section>
+
+<section class="step">
+  <h2>4. Flash</h2>
+  <ol>
+    <li>Back up your projects with Elektron Transfer.</li>
+    <li>Connect a MIDI interface to the Cycles' <b>MIDI IN</b> (TRS jack): it is also your way back to the official OS.</li>
+    <li>Hold FUNC while switching on, choose OS UPGRADE (TRIG 4), then send the .syx with any SysEx tool. Details: <a href="https://github.com/18nelli18/Modded-Cycles/blob/main/FLASH.md">FLASH.md</a>.</li>
+    <li>To go back, flash the official <code>model-cycles_OS1.13.syx</code> the same way.</li>
+  </ol>
+  <p class="note">A modified firmware is flashed at your own risk and may affect your warranty. Not affiliated with Elektron.</p>
+</section>
+
+<section class="step">
+  <h2>Knobs</h2>
+  <table>
+    <tr><th>Cycles</th><th>TrxB2</th><th>EfmBD</th><th>EfmSD</th></tr>
+    <tr><td>PITCH</td><td colspan="3">PTCH (+ trig note − 60)</td></tr>
+    <tr><td>DECAY</td><td colspan="3">DEC</td></tr>
+    <tr><td>COLOR</td><td>DIST</td><td>MOD</td><td>MOD</td></tr>
+    <tr><td>SHAPE</td><td>DIRT</td><td>MFRQ</td><td>MFRQ</td></tr>
+    <tr><td>SWEEP</td><td>RAMP</td><td>RAMP</td><td>NOIS</td></tr>
+    <tr><td>CONTOUR</td><td>HOLD</td><td>RDEC</td><td>NDEC</td></tr>
+    <tr><td>PUNCH</td><td>TICK 0 / 64</td><td>MFB 127 / 0</td><td>HPF 16 / 64</td></tr>
+  </table>
+  <p class="note">PUNCH off keeps the Machinedrum defaults. Not combinable with the Modded-Cycles Syntakt engines, MACRO or Model-TG.</p>
+</section>
+<p class="note">Built on <a href="https://github.com/18nelli18/Modded-Cycles">Modded-Cycles</a> (MIT). Source and proofs: <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum/blob/main/MD-MACHINES.md">MD-MACHINES.md</a>.</p>
 </main>
 
-<footer class="foot">
-  <div class="wrap">
-    <p>
-      <span data-l="en">Independent project, not affiliated with Elektron. Flashing a modified firmware is at your own risk. If the mods are useful to you, you can support the project on <a href="https://ko-fi.com/18nelli" target="_blank" rel="noopener">Ko-fi</a>. Questions and feedback: join the <a href="https://discord.gg/hWegtJZcmm" target="_blank" rel="noopener">Discord</a>.</span>
-      <span data-l="fr">Projet indépendant, non affilié à Elektron. Flasher un firmware modifié se fait à vos risques. Si ces mods vous servent, vous pouvez soutenir le projet sur <a href="https://ko-fi.com/18nelli" target="_blank" rel="noopener">Ko-fi</a>. Questions et retours : rejoignez le <a href="https://discord.gg/hWegtJZcmm" target="_blank" rel="noopener">Discord</a>.</span>
-    </p>
-    <nav aria-label="Footer"><a href="https://github.com/18nelli18/Modded-Cycles" target="_blank" rel="noopener">GitHub</a><a href="https://discord.gg/hWegtJZcmm" target="_blank" rel="noopener">Discord</a><a href="https://ko-fi.com/18nelli" target="_blank" rel="noopener">Ko-fi</a></nav>
-  </div>
-</footer>
+<script src="builder.js"></script>
+<script src="md-data.js"></script>
+<script src="md.js"></script>
+<script>
+(function () {
+  "use strict";
+  const T = {
+    building: "Building… (a few seconds)",
+    ok: (s) => "Done. Patched MAIN OS SHA-256 " + s.slice(0, 16) + "… matches the reference.",
+    need: "Choose both files first.",
+    cyc: "This is not a Model:Cycles OS file (model-cycles_OS1.13.syx).",
+    md: "This is not a Machinedrum OS file (Elektron_SPS1-1UW_OS1.63.syx).",
+  };
+  const t = (k, ...a) => (typeof T[k] === "function" ? T[k](...a) : T[k]);
+  const files = { cyc: null, md: null };
+  const go = document.getElementById("go"), status = document.getElementById("status"), dl = document.getElementById("dl");
+  const say = (msg, cls) => { status.textContent = msg; status.className = cls || ""; };
 
-<script src="assets/release.js?v=2026-10-11-02"></script>
-<script src="assets/cycles.js?v=2026-10-11-02"></script>
-<script src="assets/site.js?v=2026-10-11-02"></script>
+  function take(key, file) {
+    const box = document.getElementById("drop-" + key);
+    file.arrayBuffer().then((buf) => {
+      const b = new Uint8Array(buf);
+      // F0 00 20 3C <produit> : 0x11 Model:Cycles, 0x02 Machinedrum
+      const product = b.length > 5 && b[0] === 0xf0 && b[1] === 0x00 && b[2] === 0x20 && b[3] === 0x3c ? b[4] : -1;
+      if (product !== (key === "cyc" ? 0x11 : 0x02)) {
+        files[key] = null;
+        box.classList.remove("done");
+        go.disabled = true;
+        return say(t(key), "bad");
+      }
+      files[key] = b;
+      box.classList.add("done");
+      box.querySelector(".what").textContent = file.name + " (" + Math.round(buf.byteLength / 1024) + " KB)";
+      go.disabled = !(files.cyc && files.md);
+      dl.style.display = "none";
+      say("");
+    });
+  }
+  for (const key of ["cyc", "md"]) {
+    const box = document.getElementById("drop-" + key), input = document.getElementById("file-" + key);
+    input.addEventListener("change", () => input.files[0] && take(key, input.files[0]));
+    box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("over"); });
+    box.addEventListener("dragleave", () => box.classList.remove("over"));
+    box.addEventListener("drop", (e) => {
+      e.preventDefault(); box.classList.remove("over");
+      if (e.dataTransfer.files[0]) take(key, e.dataTransfer.files[0]);
+    });
+  }
+
+  go.addEventListener("click", () => {
+    if (!(files.cyc && files.md)) return say(t("need"), "bad");
+    go.disabled = true;
+    say(t("building"));
+    setTimeout(() => {
+      try {
+        const r = window.MDPatch.patch(files.cyc, files.md, window.MD_WEB);
+        const url = URL.createObjectURL(new Blob([r.raw], { type: "application/octet-stream" }));
+        dl.href = url;
+        dl.style.display = "block";
+        say(t("ok", r.mainOsSha), "ok");
+      } catch (e) {
+        say(e.message, "bad");
+      }
+      go.disabled = false;
+    }, 30);
+  });
+})();
+</script>
 </body>
 </html>
