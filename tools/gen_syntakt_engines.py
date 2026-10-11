@@ -820,7 +820,7 @@ def segments(parts, size):
     rs = []
     for p_ in parts:
         a = int(p_["dest"], 16)
-        n = len(p_["hex"]) // 2 if "hex" in p_ else (lambda r: int(r[1], 16) - int(r[0], 16))(p_.get("syntakt") or p_["cycles"])
+        n = len(p_["hex"]) // 2 if "hex" in p_ else p_["size"] if "size" in p_ else (lambda r: int(r[1], 16) - int(r[0], 16))(p_.get("syntakt") or p_["cycles"])
         rs.append((a & ~3, (a + n + 3) & ~3))
     out = []
     for lo, hi in sorted(rs):

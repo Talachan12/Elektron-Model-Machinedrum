@@ -1,5 +1,8 @@
 <div align="center">
 
+> **This fork adds TrxB2**: the Machinedrum TRX-B2 kick as a 7th Model:Cycles machine, patched from your own
+> official firmware files. See [TRX-B2.md](TRX-B2.md).
+
 # Modded Cycles
 
 **Custom firmware mods for the Elektron Model:Cycles, installed from your browser in about 30 seconds.**
