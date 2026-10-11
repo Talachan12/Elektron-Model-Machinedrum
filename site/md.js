@@ -4,11 +4,12 @@
  * EFM tables) and md_sine.py (the DSP's 32768-point sine recurrence, 48-bit, here with BigInt). The "md" parts of
  * the tweak become "hex" parts, then MCBuilder.build (docs/flasher/builder.js, the port of tools/build.py) builds
  * the .syx. Nothing leaves the browser. tools/md_web_check.js checks it against tools/build.py.
+ * Published alone (site/, .github/workflows/pages.yml), with a copy of builder.js next to it.
  */
 (function () {
 "use strict";
 
-const B = (typeof window !== "undefined" && window.MCBuilder) || (typeof module !== "undefined" && require("../flasher/builder.js"));
+const B = (typeof window !== "undefined" && window.MCBuilder) || (typeof module !== "undefined" && require("../docs/flasher/builder.js"));
 
 const CF_BASE = 0x200000;
 const TABLES = {                       // address, step in bytes, count (md_os.py)

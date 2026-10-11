@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Écrit docs/md/md-data.js, les données du patcher web des machines du Machinedrum (docs/md/) : device.json, le tweak
+"""Écrit docs/md/md-data.js, les données du patcher web des machines du Machinedrum (site/) : device.json, le tweak
 26-md-machines.json (recettes « md », aucun octet Elektron), l'empreinte attendue de l'OS du Machinedrum et celle du
 MAIN OS patché, calculée ici avec tools/build.py sur les fichiers officiels.
 
@@ -21,7 +21,7 @@ from mtlib import aplib, container  # noqa: E402
 from mtlib.syx import unwrap  # noqa: E402
 
 DEV = HERE.parent / "tweaks" / "model-cycles_OS1.13"
-OUT = HERE.parent / "docs" / "md" / "md-data.js"
+OUT = HERE.parent / "site" / "md-data.js"
 
 
 def mainos_sha(cycles, md):
