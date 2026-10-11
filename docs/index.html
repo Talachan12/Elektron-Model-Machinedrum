@@ -15,7 +15,7 @@
   --ink: #2a2a26; --muted: #5d5d56; --label: #b2392a;
   --lcd: #f16a50; --lcd-ink: #241710; --lcd-dim: rgba(36, 23, 16, .35);
   --led-off: #4a1d17; --led-on: #ff3b26; --ok: #2f7d4a;
-  --key: #2b3133; --key-ink: #d1d3c9; --cy: #f5a623;
+  --key: #2b3133; --key-ink: #d1d3c9; 
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; color: var(--ink);
@@ -30,8 +30,11 @@ code { font-size: .9em; overflow-wrap: anywhere; }
 .bar .brand { color: #e8e8e2; font: 600 20px/1 Barlow, sans-serif; letter-spacing: 5px; }
 .bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bar-ink); }
 .bar .links { margin-left: auto; display: flex; gap: 10px; }
-.bar a { color: var(--key-ink); text-decoration: none; padding: 9px 14px; border-radius: 4px;
-  background: linear-gradient(#394040, #222829); box-shadow: inset 0 2px 1px #65706a, 0 3px 0 #111a; }
+.bar a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 999px; text-decoration: none;
+  color: #e8e8e2; font: 600 12px/1 "Barlow Condensed", sans-serif; letter-spacing: 2px;
+  background: #ffffff0d; border: 1px solid #ffffff26; transition: background .15s, border-color .15s, color .15s; }
+.bar a:hover { background: #ffffff1f; border-color: #ffffff55; color: #fff; }
+.bar a svg { width: 15px; height: 15px; fill: currentColor; }
 
 /* the device */
 .device { max-width: 960px; margin: 0 auto 40px; padding: 0 16px; }
@@ -97,70 +100,51 @@ code { font-size: .9em; overflow-wrap: anywhere; }
 .drop .what b { color: var(--label); }
 .drop.done .what::before { content: "✓ "; color: var(--ok); font-weight: 700; }
 .drop small { display: block; margin-top: 6px; font-size: 12.5px; }
-.go { width: 100%; padding: 15px; border: 0; border-radius: 8px; cursor: pointer; color: #fff;
-  font: 700 19px/1 "Barlow Condensed", sans-serif; letter-spacing: 1px; text-transform: uppercase;
-  background: linear-gradient(#e2473a, #b52a1f); box-shadow: inset 0 2px 1px #ff8d7f, 0 4px 0 #6d1710, 0 6px 10px #0004; }
-.go:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 2px 1px #0003, 0 1px 0 #6d1710; }
-.go:disabled { background: #b9b8b0; box-shadow: inset 0 1px 0 #fff6, 0 3px 0 #8c8b83; cursor: not-allowed; }
+.go, #dl { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 16px 20px;
+  border-radius: 12px; border: 0; cursor: pointer; text-decoration: none; color: #fff;
+  font: 700 19px/1 "Barlow Condensed", sans-serif; letter-spacing: 1.2px; text-transform: uppercase;
+  transition: transform .08s, box-shadow .15s, filter .15s, background .15s; }
+.go svg, #dl svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+.go { background: linear-gradient(180deg, #e9554a, #c3301f); box-shadow: inset 0 1px 0 #ffffff55, inset 0 -2px 0 #0000002e, 0 6px 16px #c3301f55; }
+.go:hover:not(:disabled) { filter: brightness(1.06); box-shadow: inset 0 1px 0 #ffffff55, inset 0 -2px 0 #0000002e, 0 8px 22px #c3301f77; }
+.go:active:not(:disabled), #dl:active { transform: translateY(1px) scale(.995); }
+.go:focus-visible, #dl:focus-visible, .drop:focus-within { outline: 3px solid #f5b1a6; outline-offset: 2px; }
+.go:disabled { cursor: not-allowed; color: #8a897f; background: #e4e3dc; box-shadow: inset 0 0 0 1.5px #c3c2b9; }
+.go.busy, .go.busy:disabled { cursor: progress; color: #fff; background: linear-gradient(180deg, #e9554a, #c3301f); box-shadow: inset 0 1px 0 #ffffff55, 0 6px 16px #c3301f55; }
+.go.busy svg { display: none; }
+.go.busy::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #ffffff55; border-top-color: #fff; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#dl { display: none; margin-top: 12px; background: linear-gradient(180deg, #3a9a5c, #2a7a47);
+  box-shadow: inset 0 1px 0 #ffffff44, inset 0 -2px 0 #0000002e, 0 6px 16px #2a7a4755; }
+#dl:hover { filter: brightness(1.06); }
+.pick { display: inline-block; margin-top: 10px; padding: 7px 14px; border-radius: 999px; background: #fff; color: var(--ink);
+  font: 600 13px/1 "Barlow Condensed", sans-serif; letter-spacing: .8px; text-transform: uppercase;
+  box-shadow: inset 0 0 0 1.5px #b9b8ae, 0 1px 2px #0002; transition: box-shadow .15s, color .15s; }
+.drop:hover .pick { color: var(--label); box-shadow: inset 0 0 0 1.5px var(--label), 0 1px 2px #0002; }
+.drop.done .pick { color: var(--ok); box-shadow: inset 0 0 0 1.5px var(--ok); }
 .hint { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 13px; }
 #msg { margin: 12px 0 0; min-height: 1.4em; font-size: 15px; text-align: center; overflow-wrap: anywhere; }
 #msg.ok { color: var(--ok); font-weight: 600; }
 #msg.bad { color: #b3261e; font-weight: 600; }
-#dl { display: none; margin-top: 12px; padding: 14px; border-radius: 8px; text-align: center; text-decoration: none;
-  color: #fff; background: var(--ok); font: 700 18px/1 "Barlow Condensed", sans-serif; letter-spacing: .8px;
-  box-shadow: 0 4px 0 #1c4d2d, 0 6px 10px #0004; }
+
 .flash { border: 1px solid var(--groove); border-top: 0; box-shadow: 1px 1px 0 var(--groove-hi); padding: 18px; }
 ol { margin: 0; padding-left: 1.2em; font-size: 14px; }
 ol li + li { margin-top: 5px; }
 .note { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
 
-/* Model:Cycles panel (light grey body, dark knobs, coral pads, grey LCD) */
-.cycles { margin-top: 26px; border-radius: 22px; padding: 18px; color: #2b2b29;
-  background: linear-gradient(180deg, #b4b5b0, #a3a49f); box-shadow: inset 0 2px 0 #ffffff55, inset 0 -3px 0 #0002, 0 18px 40px #0008; }
-.cy-in { border-radius: 16px; padding: 18px 18px 16px; background: linear-gradient(180deg, #a6a7a2, #a9aaa5);
-  box-shadow: inset 0 2px 4px #0003, inset 0 -1px 0 #ffffff40; }
-.cy-cap { color: #626360; font: 600 11px/1.2 "Barlow Condensed", sans-serif; letter-spacing: .6px; text-transform: uppercase; text-align: center; }
-.cy-grid { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: start; }
-.cy-left { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.cy-row { display: flex; align-items: flex-start; gap: 16px; }
-.lvl { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 6px;
-  background: radial-gradient(circle at 35% 30%, #6fa6cf, #2e6f9c 70%); box-shadow: 0 3px 4px #0005, inset 0 1px 1px #fff6; }
-.lcdc { width: 200px; border-radius: 5px; padding: 3px; background: #1e1e1d; box-shadow: 0 0 0 2px #8e8f8a; }
-.lcdc .scr { background: linear-gradient(#d2d5cf, #c4c8c1); border-radius: 2px; padding: 5px 7px; color: #1d1f1c;
-  font: 19px/1 VT323, monospace; }
-.lcdc .t { display: flex; justify-content: space-between; font-size: 23px; border-bottom: 2px solid #1d1f1c; padding-bottom: 2px; margin-bottom: 3px; }
-.lcdc ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 6px; font-size: 18px; }
-.lcdc li { margin: 0; color: #6c706a; }
-.lcdc li.new { color: #1d1f1c; }
-.lcdc li.new::before { content: "▸"; }
-.wordmark { font: 700 17px/1 Barlow, sans-serif; letter-spacing: -.2px; color: #1f1f1e; }
-.cy-knobs { display: grid; grid-template-columns: repeat(4, 1fr) 70px; gap: 16px 10px; }
-.ck { text-align: center; position: relative; }
-.ck .dial { position: relative; width: 50px; height: 50px; margin: 0 auto 7px; border-radius: 50%;
-  background: radial-gradient(circle at 38% 30%, #7d7e7c, #575856 60%, #4a4b49); box-shadow: 0 4px 5px #0005, inset 0 1px 1px #ffffff40; }
-.ck .dial::after { content: ""; position: absolute; left: 50%; top: 5px; width: 3px; height: 10px; margin-left: -1.5px; border-radius: 2px;
-  background: #2b2c2a; transform-origin: 50% 20px; transform: rotate(var(--a, 0deg)); }
-.ck .sq { position: absolute; left: 4px; top: 10px; width: 9px; height: 9px; border-radius: 1px; background: #2a2a29; }
-.ck.big .dial { width: 46px; height: 46px; }
-.ck .dial.white { background: radial-gradient(circle at 38% 30%, #ffffff, #dcdcd8 70%); }
-.ck .dial.mauve { background: radial-gradient(circle at 38% 30%, #c4b2b3, #8f7b7d 70%); }
-.ck b { display: block; font: 700 12.5px/1 "Barlow Condensed", sans-serif; letter-spacing: .8px; color: #232322; text-transform: uppercase; }
-.ck table { margin: 6px auto 0; border-collapse: collapse; font: 500 12.5px/1.35 "Barlow Condensed", sans-serif; color: #2f302e; }
-.ck td { padding: 0 3px; text-align: left; }
-.ck td:first-child { color: #b5463a; font-weight: 700; }
-.pads { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 22px 0 14px; }
-.pad { height: 64px; border-radius: 8px; display: grid; place-items: center;
-  font: 600 18px/1 Barlow, sans-serif; color: #e3e3e0; background: linear-gradient(#9fa09d, #8c8d8a);
-  box-shadow: 0 0 0 3px #2e2e2d, 0 4px 0 3px #2e2e2d, inset 0 1px 1px #ffffff55; }
-.pad.on { background: radial-gradient(circle at 50% 45%, #ffc9bd, #f08a76 75%); color: #fff; box-shadow: 0 0 0 3px #2e2e2d, 0 4px 0 3px #2e2e2d, 0 0 14px #f3978577; }
-.pad small { display: block; font: 700 12px/1 "Barlow Condensed", sans-serif; color: #7a2a1f; margin-top: 3px; text-align: center; }
-.steps16 { display: grid; grid-template-columns: repeat(16, 1fr); gap: 7px; }
-.st { aspect-ratio: 1.2; border-radius: 5px; display: grid; place-items: center; font: 600 12px/1 Barlow, sans-serif; color: #dadad6;
-  background: linear-gradient(#8f908d, #7d7e7b); box-shadow: 0 0 0 2px #2e2e2d, 0 3px 0 2px #2e2e2d; }
-.st.on { background: #f39785; color: #fff3ef; }
-.cycles .note { color: #3d3e3b; }
-.cycles .cy-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 4px 12px;
-  font: 700 12px/1 "Barlow Condensed", sans-serif; letter-spacing: 2px; text-transform: uppercase; color: #4b4c49; }
+/* data entry */
+.entry { border: 1px solid var(--groove); border-top: 0; box-shadow: 1px 1px 0 var(--groove-hi); padding: 18px; }
+.knobs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 10px; }
+.kn { text-align: center; }
+.kn .dial { position: relative; width: 44px; height: 44px; margin: 0 auto 7px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #6c706d, #2f3432 45%, #151918 80%);
+  box-shadow: inset 0 2px 2px #ffffff40, inset -2px -3px 4px #000c, 0 3px 5px #0007, 0 0 0 4px #c5c4bb, 0 0 0 5px #a9a89f; }
+.kn .dial::after { content: ""; position: absolute; left: 50%; top: 5px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px;
+  background: #f0efe8; transform-origin: 50% 17px; transform: rotate(var(--a, 0deg)); }
+.kn b { display: block; font: 700 13px/1 "Barlow Condensed", sans-serif; letter-spacing: 1px; }
+.kn table { margin: 6px auto 0; border-collapse: collapse; font: 500 12px/1.35 "Barlow Condensed", sans-serif; }
+.kn td { padding: 0 3px; text-align: left; }
+.kn td:first-child { color: var(--label); font-weight: 700; }
 
 footer { max-width: 960px; margin: 0 auto 30px; padding: 0 16px; color: var(--bar-ink); font-size: 12.5px; text-align: center; }
 footer a { color: #e8e8e2; }
@@ -170,11 +154,7 @@ footer a { color: #e8e8e2; }
   .top > * + * { border-left: 0; border-top: 1px solid var(--groove); }
   .screen { order: -1; }
   .steps { grid-template-columns: 1fr; }
-  .cy-grid { grid-template-columns: 1fr; }
-  .cy-knobs { grid-template-columns: repeat(2, 1fr); }
-  .ck.side { display: none; }
-  .pads { gap: 8px; }
-  .steps16 { grid-template-columns: repeat(8, 1fr); }
+  .knobs { grid-template-columns: repeat(2, 1fr); }
   .plate { padding: 30px 14px 22px; }
   .bar .links { margin-left: 0; }
 }
@@ -186,8 +166,8 @@ footer a { color: #e8e8e2; }
   <span class="dot"></span>
   <span>Machines for the Model:Cycles / OS 1.13</span>
   <span class="links">
-    <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum">GitHub</a>
-    <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum/blob/main/MD-MACHINES.md">Info</a>
+    <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum/blob/main/MD-MACHINES.md"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3.5a1 1 0 110 2 1 1 0 010-2zM9.25 12h-2.5v-1h.75V8H6.75V7h2v4h.5v1z"/></svg>Info</a>
   </span>
 </div>
 
@@ -232,6 +212,7 @@ footer a { color: #e8e8e2; }
           <input type="file" accept=".syx" id="file-cyc">
           <span class="what">Drop <b>model-cycles_OS1.13.syx</b> here, or click to choose it</span>
           <small>The official Model:Cycles OS 1.13</small>
+          <span class="pick">Choose file</span>
         </label>
       </div>
       <div class="stepbox">
@@ -240,14 +221,15 @@ footer a { color: #e8e8e2; }
           <input type="file" accept=".syx" id="file-md">
           <span class="what">Drop <b>Elektron_SPS1-1UW_OS1.63.syx</b> here, or click to choose it</span>
           <small>The official Machinedrum UW OS 1.63: its sound tables are read from it</small>
+          <span class="pick">Choose file</span>
         </label>
       </div>
       <div class="stepbox wide">
         <h3><span class="num">3</span>Build and download</h3>
-        <button class="go" id="go" disabled>Build the firmware</button>
+        <button class="go" id="go" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.5v13a1 1 0 001.5.86l11-6.5a1 1 0 000-1.72l-11-6.5A1 1 0 005 3.5z"/></svg><span>Build the firmware</span></button>
         <p class="hint" id="hint">Add both files above to enable the button.</p>
         <div id="msg" role="status"></div>
-        <a id="dl" download="model-cycles_OS1.13_md.syx">⬇ Download model-cycles_OS1.13_md.syx</a>
+        <a id="dl" download="model-cycles_OS1.13_md.syx"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2a1 1 0 011 1v8.59l2.8-2.8a1 1 0 111.4 1.42l-4.5 4.5a1 1 0 01-1.4 0l-4.5-4.5a1 1 0 111.4-1.42L9 11.59V3a1 1 0 011-1zM3 16a1 1 0 011 1h12a1 1 0 112 0 2 2 0 01-2 2H4a2 2 0 01-2-2 1 1 0 011-1z"/></svg><span>Download model-cycles_OS1.13_md.syx</span></a>
       </div>
     </div>
   </section>
@@ -262,52 +244,22 @@ footer a { color: #e8e8e2; }
     </ol>
     <p class="note">A modified firmware is flashed at your own risk and may affect your warranty. Not affiliated with Elektron.</p>
   </section>
+  <section class="entry">
+    <span class="label">Data entry · Cycles knob → Machinedrum parameter</span>
+    <div class="knobs">
+      <div class="kn"><div class="dial" style="--a:-40deg"></div><b>PITCH</b><table><tr><td>BD</td><td>PTCH + note − 60</td></tr><tr><td>SD</td><td>PTCH + note − 60</td></tr><tr><td>CH</td><td>LPF + note − 60</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:-100deg"></div><b>DECAY</b><table><tr><td>BD</td><td>DEC</td></tr><tr><td>SD</td><td>DEC</td></tr><tr><td>CH</td><td>DEC</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:20deg"></div><b>COLOR</b><table><tr><td>BD</td><td>DIST</td></tr><tr><td>SD</td><td>SNAP</td></tr><tr><td>CH</td><td>MTAL</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:-130deg"></div><b>SHAPE</b><table><tr><td>BD</td><td>DIRT</td></tr><tr><td>SD</td><td>TONE</td></tr><tr><td>CH</td><td>HPF</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:75deg"></div><b>SWEEP</b><table><tr><td>BD</td><td>RAMP</td></tr><tr><td>SD</td><td>BUMP</td></tr><tr><td>CH</td><td>RES · 70 = MD</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:0deg"></div><b>CONTOUR</b><table><tr><td>BD</td><td>HOLD</td></tr><tr><td>SD</td><td>BENV</td></tr><tr><td>CH</td><td>GAP</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:-135deg"></div><b>PUNCH</b><table><tr><td>BD</td><td>TICK 0 / 64</td></tr><tr><td>SD</td><td>CLIP 0 / 64</td></tr><tr><td>CH</td><td>–</td></tr></table></div>
+      <div class="kn"><div class="dial" style="--a:0deg"></div><b>FIXED</b><table><tr><td>BD</td><td>NOIS 0</td></tr><tr><td>SD</td><td>TUNE 64</td></tr><tr><td>CH</td><td>–</td></tr></table></div>
+    </div>
+    <p class="note">PUNCH off keeps the Machinedrum defaults. The TrxSD attack sample and the TrxSD and TrxCH filter tables are read from your Machinedrum OS. TrxCH SWEEP is an extra: the resonance of its filters, at 70 exactly the Machinedrum. Not combinable with the Modded-Cycles Syntakt engines, MACRO or Model-TG.</p>
+  </section>
 </div>
 
-<section class="cycles" aria-label="On the Model:Cycles">
-  <div class="cy-title"><span>What you get on your Model:Cycles</span><span>Machines 7 · 8 · 9</span></div>
-  <div class="cy-in">
-    <div class="cy-grid">
-      <div class="cy-left">
-        <div class="cy-row">
-          <div><div class="lvl"></div><div class="cy-cap">Level / data</div></div>
-          <div class="lcdc"><div class="scr">
-            <div class="t"><span>MACHINE</span><span>TR1</span></div>
-            <ol>
-              <li>1 KICK</li><li class="new">7 TRXB2</li>
-              <li>2 SNARE</li><li class="new">8 TRXSD</li>
-              <li>3 METAL</li><li class="new">9 TRXCH</li>
-              <li>4 PERC</li><li></li>
-              <li>5 TONE</li><li></li>
-              <li>6 CHORD</li><li></li>
-            </ol>
-          </div></div>
-        </div>
-        <div class="wordmark">Model:Cycles</div>
-      </div>
-      <div class="cy-knobs">
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:-40deg"></div><b>Pitch</b><table><tr><td>B2</td><td>PTCH + note − 60</td></tr><tr><td>SD</td><td>PTCH + note − 60</td></tr><tr><td>CH</td><td>LPF + note − 60</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:-100deg"></div><b>Decay</b><table><tr><td>B2</td><td>DEC</td></tr><tr><td>SD</td><td>DEC</td></tr><tr><td>CH</td><td>DEC</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:20deg"></div><b>Color</b><table><tr><td>B2</td><td>DIST</td></tr><tr><td>SD</td><td>SNAP</td></tr><tr><td>CH</td><td>MTAL</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:-130deg"></div><b>Shape</b><table><tr><td>B2</td><td>DIRT</td></tr><tr><td>SD</td><td>TONE</td></tr><tr><td>CH</td><td>HPF</td></tr></table></div>
-      <div class="ck side"><div class="dial white"></div><b>Main volume</b></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:75deg"></div><b>Sweep</b><table><tr><td>B2</td><td>RAMP</td></tr><tr><td>SD</td><td>BUMP</td></tr><tr><td>CH</td><td>RES · 70 = MD</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:0deg"></div><b>Contour</b><table><tr><td>B2</td><td>HOLD</td></tr><tr><td>SD</td><td>BENV</td></tr><tr><td>CH</td><td>GAP</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:-135deg"></div><b>Punch</b><table><tr><td>B2</td><td>TICK 0 / 64</td></tr><tr><td>SD</td><td>CLIP 0 / 64</td></tr><tr><td>CH</td><td>–</td></tr></table></div>
-      <div class="ck"><span class="sq"></span><div class="dial" style="--a:0deg"></div><b>Fixed</b><table><tr><td>B2</td><td>NOIS 0</td></tr><tr><td>SD</td><td>TUNE 64</td></tr><tr><td>CH</td><td>–</td></tr></table></div>
-      <div class="ck side"><div class="dial mauve"></div><b>Reverb size</b></div>
-      </div>
-    </div>
-    <div class="pads">
-      <div class="pad on"><span>T1<small>TrxB2</small></span></div>
-      <div class="pad on"><span>T2<small>TrxSD</small></span></div>
-      <div class="pad on"><span>T3<small>TrxCH</small></span></div>
-      <div class="pad">T4</div><div class="pad">T5</div><div class="pad">T6</div>
-    </div>
-    <div class="steps16"><span class="st on">1</span><span class="st">2</span><span class="st">3</span><span class="st">4</span><span class="st on">5</span><span class="st">6</span><span class="st">7</span><span class="st">8</span><span class="st on">9</span><span class="st">10</span><span class="st">11</span><span class="st">12</span><span class="st on">13</span><span class="st">14</span><span class="st">15</span><span class="st">16</span></div>
-  </div>
-  <p class="note">Pick a track, open its machine setting and turn LEVEL/DATA past CHORD: TrxB2, TrxSD and TrxCH are machines 7, 8 and 9, usable on any of the six tracks. PUNCH off keeps the Machinedrum defaults. The TrxSD attack sample and the TrxSD and TrxCH filter tables are read from your Machinedrum OS. TrxCH SWEEP is an extra: the resonance of its filters, at 70 exactly the Machinedrum. Not combinable with the Modded-Cycles Syntakt engines, MACRO or Model-TG.</p>
-</section>
 </div>
 
 <footer>Source code: <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum">github.com/Talachan12/Elektron-Model-Machinedrum</a>. Built on <a href="https://github.com/18nelli18/Modded-Cycles">Modded-Cycles</a> (MIT). Source and proofs: <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum/blob/main/MD-MACHINES.md">MD-MACHINES.md</a>. Not affiliated with Elektron.</footer>
@@ -349,6 +301,7 @@ footer a { color: #e8e8e2; }
       }
       files[key] = b;
       box.classList.add("done");
+      box.querySelector(".pick").textContent = "Change file";
       box.querySelector(".what").textContent = file.name + " · " + Math.round(buf.byteLength / 1024) + " KB";
       go.disabled = !(files.cyc && files.md);
       dl.style.display = "none";
@@ -370,18 +323,20 @@ footer a { color: #e8e8e2; }
   go.addEventListener("click", () => {
     if (!(files.cyc && files.md)) return say(t("need"), "bad");
     go.disabled = true;
+    go.classList.add("busy");
     say(t("building"));
     setTimeout(() => {
       try {
         const r = window.MDPatch.patch(files.cyc, files.md, window.MD_WEB);
         const url = URL.createObjectURL(new Blob([r.raw], { type: "application/octet-stream" }));
         dl.href = url;
-        dl.style.display = "block";
+        dl.style.display = "flex";
         say(t("ok", r.mainOsSha), "ok");
       } catch (e) {
         say(e.message, "bad");
       }
       go.disabled = false;
+      go.classList.remove("busy");
     }, 30);
   });
 })();
