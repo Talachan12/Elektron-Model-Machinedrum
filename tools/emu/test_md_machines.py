@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Preuve des machines du Machinedrum ajoutées au Model:Cycles (tools/machines/md, tools/gen_md_machines.py) :
-TrxB2 et TrxSD en 7e et 8e machines. Le vrai code de l'OS, émulé (Unicorn), avec la charge utile telle
+TrxB2, TrxSD et TrxCH en 7e, 8e et 9e machines. Le vrai code de l'OS, émulé (Unicorn), avec la charge utile telle
 que le crochet de démarrage la reconstitue.
 
   1. Démarrage : le crochet (stub.S, PACK) reconstitue la charge utile, la SRAM reste intacte, retour normal.
@@ -8,7 +8,7 @@ que le crochet de démarrage la reconstitue.
      écran MACHINES, molette, enregistrements, changement de machine, icône).
   3. Son : à chaque bloc, ce que l'OS passe à l'update de la machine (note, paramètres, trig) est relu, et ce que
      sort notre render est comparé à la référence compilée pour l'ordinateur (host_ref.c : bridge.c + trx_b2.c +
-     trx_sd.c, dont les cœurs sont identiques au DSP émulé du Machinedrum) ; changement de machine sur une piste ;
+     trx_sd.c + trx_ch.c, dont les cœurs sont identiques au DSP émulé du Machinedrum) ; changement de machine sur une piste ;
      les machines d'origine ne changent pas.
   4. Coût : instructions par bloc (une voix de chaque machine), comparées à KICK.
 
@@ -45,7 +45,7 @@ import test_syntakt_machines as tsm  # noqa: E402
 
 DEV = HERE.parent.parent / "tweaks" / "model-cycles_OS1.13"
 check = TMc.check
-FIRST = 6                           # TrxB2 ; TrxSD 7
+FIRST = 6                           # TrxB2 ; TrxSD 7 ; TrxCH 8
 NAMES = [m["name"] for m in gt.MACHINES]
 BASE_KW = dict(note=60, pitch=64, color=0, shape=0, sweep=96, contour=64, punch=0, gate=0, finetune=64, decay=64)
 
@@ -154,7 +154,8 @@ class HostRef:
         (tmp / "decl.h").write_text("extern char voices[];\n")
         subprocess.run(["cc", "-O2", "-std=c99", "-Wno-pointer-to-int-cast", "-include", str(tmp / "decl.h"),
                         f"-I{src}", f"-I{gen}", "-DCYC_VOICE0=((u32)(unsigned long)voices)",
-                        str(src / "bridge.c"), str(src / "trx_b2.c"), str(src / "trx_sd.c"), str(gen / "trx_b2_md.c"),
+                        str(src / "bridge.c"), str(src / "trx_b2.c"), str(src / "trx_sd.c"), str(src / "trx_ch.c"),
+                        str(gen / "trx_b2_md.c"),
                         str(src / "host_ref.c"), "-o", str(self.exe)], check=True)
 
     def run(self, recs):

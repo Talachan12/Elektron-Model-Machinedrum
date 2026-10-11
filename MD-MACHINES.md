@@ -1,16 +1,17 @@
 # Machinedrum machines on the Model:Cycles
 
-Two machines from the **Elektron Machinedrum SPS-1 UW (OS 1.63)**, added to the **Elektron Model:Cycles (OS 1.13)** as
-machines 7 and 8 and ported **sample for sample** from the Machinedrum's DSP code:
+Three machines from the **Elektron Machinedrum SPS-1 UW (OS 1.63)**, added to the **Elektron Model:Cycles (OS 1.13)** as
+machines 7, 8 and 9 and ported **sample for sample** from the Machinedrum's DSP code:
 
 | Cycles machine | Machinedrum machine | Cycles icon |
 |---|---|---|
 | **TrxB2** | TRX-B2, bass drum | KICK |
 | **TrxSD** | TRX-SD, snare drum | SNARE |
+| **TrxCH** | TRX-CH, closed hi-hat | METAL |
 
 Built on [Modded-Cycles](https://github.com/18nelli18/Modded-Cycles) (same patching toolchain, same added-machine
-mechanism as its MACRO machine). TrxB2 has been tested on a real Model:Cycles. TrxSD is proven in emulation; a hardware
-test is pending.
+mechanism as its MACRO machine). TrxB2 and TrxSD have been tested on a real Model:Cycles. TrxCH is proven in emulation; a
+hardware test is pending.
 
 ## No Elektron bytes in this repository
 
@@ -22,7 +23,7 @@ You patch **your own** firmware files:
 The following are read from your Machinedrum OS at build time:
 
 - the knob tables, from its ColdFire OS;
-- the TrxSD noise filter coefficients and its attack sample, from its DSP program.
+- the TrxSD noise filter coefficients and its attack sample, and the TrxCH filter coefficients, from its DSP program.
 
 The 32768-point sine is recomputed with the Machinedrum DSP's own algorithm. The tweak
 (`tweaks/model-cycles_OS1.13/26-md-machines.json`) only holds our compiled code and the recipe.
@@ -51,7 +52,7 @@ You only need Python 3: no compiler, no extra packages.
    python3 tools/build.py -i model-cycles_OS1.13.syx -t md-machines --md Elektron_SPS1-1UW_OS1.63.syx
    ```
 3. Check the result. The patched MAIN OS SHA-256 must be
-   `b84761e353ca5935ee24e89250bc280fe02a400c75aa07980305ae09b5e8bc6e`. The build writes
+   `2a5da970bb62c03488da2999ad770fd79a4d36fd007a93d62bce6a35149a002c`. The build writes
    `model-cycles_OS1.13_mod.syx`.
 
 ### Flash
@@ -63,23 +64,25 @@ Flashing a modified firmware is at your own risk and may affect your warranty.
 
 ## Knobs
 
-On both machines, PITCH plus (trig note − 60) gives the MD's PTCH, on the same 0..127 scale, and DECAY gives the MD's
-DEC. When PUNCH is off, the fixed values are the Machinedrum defaults.
+On TrxB2 and TrxSD, PITCH plus (trig note − 60) gives the MD's PTCH, on the same 0..127 scale. TRX-CH has no PTCH:
+there, PITCH plus (trig note − 60) gives LPF, the tuning of its resonant filter. DECAY gives the MD's DEC on all
+three. When PUNCH is off, the fixed values are the Machinedrum defaults.
 
-| Cycles | TrxB2 | TrxSD |
-|---|---|---|
-| COLOR | DIST | SNAP (noise and attack sample) |
-| SHAPE | DIRT | TONE (mix of the two oscillators) |
-| SWEEP | RAMP | BUMP |
-| CONTOUR | HOLD | BENV |
-| PUNCH off / on | TICK 0 / 64 | CLIP 0 / 64 |
-| fixed | NOIS 0 | TUNE 64 |
+| Cycles | TrxB2 | TrxSD | TrxCH |
+|---|---|---|---|
+| PITCH | PTCH | PTCH | LPF (resonant filter) |
+| COLOR | DIST | SNAP (noise and attack sample) | MTAL (noise ↔ six square oscillators) |
+| SHAPE | DIRT | TONE (mix of the two oscillators) | HPF |
+| SWEEP | RAMP | BUMP | – |
+| CONTOUR | HOLD | BENV | GAP (length of the tail) |
+| PUNCH off / on | TICK 0 / 64 | CLIP 0 / 64 | – |
+| fixed | NOIS 0 | TUNE 64 | |
 
 ## How faithful
 
-- The C cores (`tools/machines/md/trx_b2.c`, `trx_sd.c`) were compared with the original DSP56303 code run in the
-  [dsp56300](https://github.com/dsp56300/dsp56300) emulator. Every sample is identical for TRX-B2 across 409 settings
-  and for TRX-SD across 304 (every knob, extremes, retrigs, silence).
+- The C cores (`tools/machines/md/trx_b2.c`, `trx_sd.c`, `trx_ch.c`) were compared with the original DSP56303 code run
+  in the [dsp56300](https://github.com/dsp56300/dsp56300) emulator. Every sample is identical for TRX-B2 across 409
+  settings, for TRX-SD across 304 and for TRX-CH across 316 (every knob, extremes, retrigs, silence, 3000-block tails).
 - TRX-SD has a line-by-line reference (`trx_sd_ref.c`, a model of the DSP's accumulators, X/Y memory and address
   registers) and a fast version; both give the same samples as the DSP.
 - The Machinedrum runs at 44.1 kHz and the Cycles at 48 kHz. The machines render exactly like the MD at 44.1 kHz,
@@ -104,11 +107,13 @@ Instructions per audio block for the whole voice loop, with one track playing, a
 | KICK | ≈ 8.6k |
 | TrxB2 | ≈ 10k |
 | TrxSD | ≈ 13.4k |
+| TrxCH | ≈ 15.3k |
 
 The cores multiply with the ColdFire's EMAC, as the OS's own voice loop does (MACSR 0xa0). All our code, the
-resampler filter, the small Machinedrum tables and the track states run from the Cycles' internal SRAM, in place of
+resampler filter, most small Machinedrum tables and the track states run from the Cycles' internal SRAM, in place of
 the CHORD wavetables, which move to SDRAM (as with the Modded-Cycles Syntakt engines). This keeps our code out of the
-8 KB instruction cache. The 128 KB sine and the TrxSD attack sample stay in SDRAM.
+8 KB instruction cache. The 128 KB sine, the TrxSD attack sample and the TrxCH filter tables (read once per
+block) stay in SDRAM.
 
 | Six tracks | Instructions per block |
 |---|---|
@@ -116,10 +121,14 @@ the CHORD wavetables, which move to SDRAM (as with the Modded-Cycles Syntakt eng
 | 6 × CHORD | ≈ 51k |
 | 4 stock + TrxB2 + TrxSD | ≈ 49k |
 | 2 × TrxB2 + 2 × TrxSD + 2 stock | ≈ 56k |
+| 3 stock + TrxB2 + TrxSD + TrxCH | ≈ 56k |
+| 2 × TrxB2 + 2 × TrxSD + 2 × TrxCH | ≈ 72k |
 | 6 × TrxSD | ≈ 74k |
+| 6 × TrxCH | ≈ 86k |
 
-A silent machine costs almost nothing. TrxSD keeps its noise filters running, as the Machinedrum does, because their
-state carries over to the next hit.
+These figures have every track hit at once. A silent machine costs almost nothing. TrxSD keeps its noise filters
+running, as the Machinedrum does, because their state carries over to the next hit. TrxCH stops computing once its
+tail has reached exactly zero: its next hit clears its filters.
 
 ## Limits
 
@@ -135,6 +144,7 @@ You need the m68k toolchain (`m68k-elf-*` or `m68k-linux-gnu-*`) and `pip instal
 | `tools/machines/md/trx_b2.c` | TRX-B2 core (DSP P:$102c31/$102c4a/$102c5a + ColdFire knob function 0x201fd2) |
 | `tools/machines/md/trx_sd.c` | TRX-SD core (DSP P:$10074c/$10075b/$100776 + ColdFire knob function 0x2013a6) |
 | `tools/machines/md/trx_sd_ref.c`, `dsp56.h` | TRX-SD line-by-line reference (host only) |
+| `tools/machines/md/trx_ch.c` | TRX-CH core (DSP P:$10201f/$102034/$10204d + ColdFire knob function 0x201800) |
 | `tools/machines/md/mdmath.h` | exact 24 × 24-bit products: EMAC on the ColdFire, 32-bit C on the host |
 | `tools/machines/md/bridge.c` | Cycles voice-loop bridge, knob mapping, 44.1 → 48 kHz resampler |
 | `tools/machines/md/md_os.py`, `md_sine.py`, `headers.py` | reading your MD OS (ColdFire and DSP sections), the sine algorithm, generated sources |

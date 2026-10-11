@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Génère le tweak des machines du Machinedrum (OS 1.63) ajoutées au Model:Cycles, portées à l'échantillon près depuis
-le code de son DSP : TrxB2 (7e machine), TrxSD (8e). Sources : tools/machines/md/ (bridge.c, trx_b2.c, trx_sd.c).
+le code de son DSP : TrxB2 (7e machine), TrxSD (8e), TrxCH (9e). Sources : tools/machines/md/ (bridge.c, trx_b2.c, trx_sd.c,
+trx_ch.c).
 
 Même mécanique que MACRO (gen_macro.py, notes/43) et que les moteurs du Syntakt (gen_syntakt_engines.py) : charge
 utile à gs.PAY_ALONE, détours (gs.detours_asm) et tables déplacées de gs.LAYOUT, pour n machines ajoutées.
@@ -52,6 +53,9 @@ MACHINES = (
          knobs=(("Distortion", "DIST", 0), ("Dirt", "DIRT", 0), ("Ramp", "RAMP", 96), ("Hold", "HOLD", 64))),
     dict(name="TrxSD", image=1, decay=32, update="trx_sd_update",
          knobs=(("Snap", "SNAP", 64), ("Tone", "TONE", 64), ("Bump", "BUMP", 0), ("Bump Env", "BENV", 64))),
+    # TRX-CH : PITCH = LPF (défaut 64), SWEEP ne sert pas
+    dict(name="TrxCH", image=2, decay=32, update="trx_ch_update",
+         knobs=(("Metal", "MTAL", 64), ("High Pass", "HPF", 64), ("Unused", "-", 0), ("Gap", "GAP", 32))),
 )
 RENDER = "md_render32"
 # SRAM interne (notes/28) : comme les moteurs du Syntakt, à la place des tables d'ondes de CHORD (recopiées dans la
@@ -66,7 +70,7 @@ CHORD_OFF = 0x36000                                   # tables d'ondes de CHORD 
 CHORD_LEN = sum(hi - lo for lo, hi in gs.CHORD_BANKS)
 LINK = """SECTIONS
 {{
-  .sdram {sine:#x} : {{ *(.rodata.trx_b2_sine) *(.rodata.sd_snap) }}
+  .sdram {sine:#x} : {{ *(.rodata.trx_b2_sine) *(.rodata.sd_snap) *(.rodata.ch_*) }}
   .sram {sram1:#x} : AT({code:#x}) {{ *(.text.md_render32) *(.text*) . = ALIGN(4); *(.rodata*) *(.data*) }}
   .sram2 {sram2:#x} (NOLOAD) : {{ *(.bss*) *(COMMON) }}
   /DISCARD/ : {{ *(.comment) *(.note*) *(.eh_frame*) }}
@@ -97,7 +101,7 @@ def compile_machines(tmp, md_syx, pay):
     en SDRAM. Rend (octets de pay jusqu'à la fin du sinus, symboles aux adresses d'exécution)."""
     gen = headers.write(md_syx, tmp / "gen")
     objs = []
-    for src in (SRC / "bridge.c", SRC / "trx_b2.c", SRC / "trx_sd.c", gen / "trx_b2_md.c"):
+    for src in (SRC / "bridge.c", SRC / "trx_b2.c", SRC / "trx_sd.c", SRC / "trx_ch.c", gen / "trx_b2_md.c"):
         o = tmp / (src.stem + ".o")
         gx.run([gx.CROSS + "gcc", *CFLAGS, f"-I{SRC}", f"-I{gen}", "-c", str(src), "-o", str(o)])
         objs.append(o)
@@ -116,8 +120,8 @@ def compile_machines(tmp, md_syx, pay):
         raise SystemExit(f"!! sections inattendues : {sorted(extra)}")
     if secs[".sram"][1] > SRAM1_LEN or secs.get(".sram2", (0, 0))[1] > SRAM2_LEN:
         raise SystemExit(f"!! SRAM : {secs['.sram'][1]} o / {SRAM1_LEN}, {secs.get('.sram2', (0, 0))[1]} o / {SRAM2_LEN}")
-    if secs[".sdram"][1] != 4 * (32768 + 4096):
-        raise SystemExit("!! sinus et échantillon d'attaque")
+    if secs[".sdram"][1] != 4 * (32768 + 4096 + 5 * 128 + 2):
+        raise SystemExit("!! sinus, échantillon d'attaque et tables de TrxCH")
     undef = [l for l in gx.run([gx.CROSS + "nm", "-u", str(elf)]).splitlines() if l.strip()]
     if undef:
         raise SystemExit(f"!! symboles non résolus : {undef}")
@@ -128,7 +132,7 @@ def compile_machines(tmp, md_syx, pay):
         p_ = line.split()
         if len(p_) == 3:
             syms[p_[2]] = int(p_[0], 16)
-    if len(blob) != SINE_OFF + 4 * (32768 + 4096) or len(blob) > gs.LAYOUT["STUBS"]:
+    if len(blob) != SINE_OFF + secs[".sdram"][1] or SINE_OFF + secs[".sdram"][1] > CHORD_OFF:
         raise SystemExit(f"!! charge utile : {len(blob)} o")
     return blob, syms, dict(sram=secs[".sram"][1], sram2=secs.get(".sram2", (0, 0))[1])
 
@@ -299,7 +303,7 @@ def build_tweak(img, md_syx=None):
     out = {
         "id": TID,
         "order": 26,
-        "name": "Machines du Machinedrum : TrxB2, TrxSD (OS 1.63), à l'échantillon près",
+        "name": "Machines du Machinedrum : TrxB2, TrxSD, TrxCH (OS 1.63), à l'échantillon près",
         "description": [
             "TRX-B2 et TRX-SD du Machinedrum en 7e et 8e machines : le code du DSP A du Machinedrum porté",
             "en C, identique à l'échantillon près (comparé au DSP émulé), rendu à 44,1 kHz puis ramené à 48 kHz",

@@ -118,6 +118,18 @@ def tables(path):
     out["sd_k1"] = [_s24(dsp["X"][0x140900 + 0x400 + 4 * k - 3]) for k in range(128)]
     out["sd_k2"] = [_s24(dsp["X"][0x141900 + 0x400 + 4 * k - 0x241]) for k in range(128)]
     out["sd_snap"] = [_s24(dsp["P"][0x100881 + i]) for i in range(4096)]
+    # TRX-CH (ColdFire 0x201800 : GAP ; DSP A P:$10201f) : coefficients de ses 3 filtres, x:$140900 / x:$141900 a
+    # f + x:$140000[q] / f + x:$140080[q] : filtre 1 (f = LPF, q = 0x46), filtre 2 (f = HPF, q = 0x46), filtre 3
+    # (f = 0x30, q = 0)
+    out["ch_gap"] = [s32(at(0x24bf94 + 0x38c + 4 * (((k << 7) >> 8) & 0xff), 4)) for k in range(128)]
+    X = dsp["X"]
+    kk = lambda f, q: (_s24(X[(0x140900 + f + _s24(X[0x140000 + q])) & 0xffffff]),
+                       _s24(X[(0x141900 + f + _s24(X[0x140080 + q])) & 0xffffff]))
+    lp = [kk((((k << 7) * 0xac77) >> 22) + 0x680, 0x46) for k in range(128)]
+    hp = [kk((((k << 7) * 0x2d83) >> 20) + 0x600, 0x46) for k in range(128)]
+    out["ch_lk1"], out["ch_lk2"] = [a for a, _ in lp], [b for _, b in lp]
+    out["ch_hk1"], out["ch_hk2"] = [a for a, _ in hp], [b for _, b in hp]
+    out["ch_dk"] = list(kk(0x30, 0))
     return out, sha
 
 

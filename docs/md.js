@@ -157,6 +157,17 @@ function mdParts(raw, expectSha) {
   parts.sd_k1 = toBytes(k128((k) => s24(dsp.X.get(0x140900 + 0x400 + 4 * k - 3))));
   parts.sd_k2 = toBytes(k128((k) => s24(dsp.X.get(0x141900 + 0x400 + 4 * k - 0x241))));
   parts.sd_snap = toBytes(Array.from({ length: 4096 }, (_, i) => s24(dsp.P.get(0x100881 + i))));
+  // TRX-CH: GAP (ColdFire 0x201800, high byte of the knob word) and the coefficients of its three filters (md_os.py)
+  parts.ch_gap = toBytes(k128((k) => long(0x24bf94 + 0x38c + 4 * (((k << 7) >> 8) & 0xff))));
+  const kk = (f, q) => [s24(dsp.X.get((0x140900 + f + s24(dsp.X.get(0x140000 + q))) & 0xffffff)),
+                        s24(dsp.X.get((0x141900 + f + s24(dsp.X.get(0x140080 + q))) & 0xffffff))];
+  const lp = k128((k) => kk((((k << 7) * 0xac77) >>> 22) + 0x680, 0x46));
+  const hp = k128((k) => kk((((k << 7) * 0x2d83) >>> 20) + 0x600, 0x46));
+  parts.ch_lk1 = toBytes(lp.map((c) => c[0]));
+  parts.ch_lk2 = toBytes(lp.map((c) => c[1]));
+  parts.ch_hk1 = toBytes(hp.map((c) => c[0]));
+  parts.ch_hk2 = toBytes(hp.map((c) => c[1]));
+  parts.ch_dk = toBytes(kk(0x30, 0));
   parts.sine = toBytes(Array.from(sineTable()));
   return parts;
 }

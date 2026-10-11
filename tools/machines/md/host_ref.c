@@ -1,7 +1,7 @@
 /*
  * Reference du pont des machines du Machinedrum compilee pour l'ordinateur (tools/emu/test_md_machines.py) :
- * bridge.c + trx_b2.c + trx_sd.c, avec une voix et des parametres simules. Une ligne par bloc du Cycles sur l'entree :
- *   machine trig pitch color shape sweep contour punch decay note   (machine 0..1, potards en 8.8, note en demi-tons)
+ * bridge.c + trx_b2.c + trx_sd.c + trx_ch.c, avec une voix et des parametres simules. Une ligne par bloc du Cycles sur l'entree :
+ *   machine trig pitch color shape sweep contour punch decay note   (machine 0..2, potards en 8.8, note en demi-tons)
  * Sortie : 32 x int32 par bloc (Q31), petit-boutiste.
  */
 #include <stdio.h>
@@ -12,8 +12,9 @@ char voices[6 * 0x31c];
 
 void trx_b2_update(int32_t pmod, char *v, const char *p);
 void trx_sd_update(int32_t pmod, char *v, const char *p);
+void trx_ch_update(int32_t pmod, char *v, const char *p);
 void md_render32(int32_t *out, char *v);
-static void (*const upd[2])(int32_t, char *, const char *) = { trx_b2_update, trx_sd_update };
+static void (*const upd[3])(int32_t, char *, const char *) = { trx_b2_update, trx_sd_update, trx_ch_update };
 
 static void w16(char *p, int o, int x)               /* l'ordinateur est petit-boutiste, comme le pont le lit */
 {
