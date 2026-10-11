@@ -1,10 +1,10 @@
-// Vérifie le patcher web des machines du Machinedrum (site/) contre tools/build.py :
+// Vérifie le patcher web des machines du Machinedrum (docs/) contre tools/build.py :
 //   node tools/md_web_check.js model-cycles_OS1.13.syx Elektron_SPS1-1UW_OS1.63.syx model-cycles_OS1.13_mod.syx
 // Le 3e fichier : la sortie de « build.py -t md-machines --md … » (comparée octet pour octet).
 "use strict";
 const fs = require("fs"), path = require("path");
 global.window = {};
-const site = path.join(__dirname, "..", "site");
+const site = path.join(__dirname, "..", "docs");
 require(path.join(site, "md-data.js"));
 const md = require(path.join(site, "md.js"));
 const [cyc, mdf, ref] = process.argv.slice(2);
