@@ -76,16 +76,55 @@ class Fw(TMc.Fw):
 
 
 def boot(fw):
-    """test_macro.boot, avec notre tweak à la place de MACRO."""
-    for t in fw.tweaks:
-        if t["id"] == gt.TID:
-            t["id"] = "macro-as-md"             # test_macro.boot cherche le tweak par ce préfixe
-    try:
-        TMc.boot(fw)
-    finally:
-        for t in fw.tweaks:
-            if t["id"] == "macro-as-md":
-                t["id"] = gt.TID
+    """Le crochet de démarrage, exécuté pour de vrai au début de la remise à zéro du BSS (0x400004b2) : charge utile
+    reconstituée (morceaux, zéros), puis ses deux zones de transit recopiées en SRAM à la place des tables d'ondes de
+    CHORD (le reste de la SRAM intact), et celles-ci lues par l'OS à leur nouvelle place."""
+    from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_MEM_UNMAPPED
+    uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+    uc.ctl_set_cpu_model(mk.UC_CPU_M68K_ANY)
+    uc.mem_map(0x40000000, 0x02400000)
+    uc.mem_write(E.BASE, fw.img)
+    dst, rt = fw.payload
+    uc.mem_map(dst, 0x00100000)
+    uc.mem_write(dst, b"\xa5" * 0x00100000)
+    uc.mem_map(0x80000000, 0x00010000)
+    sram = bytearray(0x10000)
+    for lo, hi, d in gs.CY_SRAM_INIT:
+        sram[d - 0x80000000:d - 0x80000000 + hi - lo] = fw.img[lo - E.BASE:hi - E.BASE]
+    uc.mem_write(0x80000000, bytes(sram))
+    uc.mem_map(0x90000000, 0x00020000)
+    uc.mem_write(E.STOP, b"\x4e\x71\x4e\x71")
+    bad = []
+    uc.hook_add(UC_HOOK_MEM_UNMAPPED, lambda u, a, addr, s_, v, d: bad.append(addr) or False)
+    keep = {r: 0x11110000 + i for i, r in enumerate((mk.UC_M68K_REG_D2, mk.UC_M68K_REG_D3, mk.UC_M68K_REG_D4,
+                                                     mk.UC_M68K_REG_D5, mk.UC_M68K_REG_D6, mk.UC_M68K_REG_D7,
+                                                     mk.UC_M68K_REG_A2, mk.UC_M68K_REG_A3, mk.UC_M68K_REG_A4,
+                                                     mk.UC_M68K_REG_A5, mk.UC_M68K_REG_A6))}
+    for r, v in keep.items():
+        uc.reg_write(r, v)
+    sp0 = 0x90010000
+    uc.mem_write(sp0, struct.pack(">I", E.STOP))
+    uc.reg_write(mk.UC_M68K_REG_A7, sp0)
+    uc.emu_start(0x400004b2, E.STOP, count=100_000_000)
+    regs = all(uc.reg_read(r) == v for r, v in keep.items())
+    check(uc.reg_read(mk.UC_M68K_REG_PC) == E.STOP and uc.reg_read(mk.UC_M68K_REG_A7) == sp0 + 4 and regs
+          and not bad, "0x400004b2 -> notre crochet -> remise à zéro du BSS de l'OS, retour normal, d2..d7/a2..a6 "
+                       "intacts, aucun accès hors mémoire")
+    check(bytes(uc.mem_read(dst, len(rt))) == rt, f"charge utile reconstituée à {dst:#x} : {len(rt)} o")
+    want = bytearray(sram)
+    (b1, e1), (b2, e2) = gs.CHORD_BANKS
+    want[b1 - 0x80000000:e1 - 0x80000000] = rt[:e1 - b1]
+    want[b2 - 0x80000000:e2 - 0x80000000] = rt[e1 - b1:e1 - b1 + e2 - b2]
+    check(bytes(uc.mem_read(0x80000000, 0x10000)) == bytes(want),
+          "SRAM : nos deux zones à la place des tables d'ondes de CHORD, le reste intact")
+    ptrs = [struct.unpack_from(">I", fw.img, gs.CHORD_PTRS + 4 * i - E.BASE)[0] for i in range(31)]
+    stock_ptrs = [struct.unpack_from(">I", fw_stock_img, gs.CHORD_PTRS + 4 * i - E.BASE)[0] for i in range(31)]
+    same = all(dst <= p < dst + len(rt) and rt[p - dst:p - dst + 0x404] == bytes(sram[o - 0x80000000:o - 0x80000000 + 0x404])
+               for p, o in zip(ptrs, stock_ptrs))
+    check(same, "tables d'ondes de CHORD : les 31 pointeurs visent leur copie dans la charge utile, identique à leur "
+                "contenu d'origine en SRAM")
+    end = E.BASE + len(fw.img)
+    check(end <= gs.END_LIMIT, f"image décompressée jusqu'à {end:#x} (limite {gs.END_LIMIT:#x})")
 
 
 def interface(stock, fw):
@@ -268,6 +307,8 @@ def main():
     args = ap.parse_args()
     stock = g7.cycles_main(args.cycles)
     tw = json.loads((DEV / "26-md-machines.json").read_text(encoding="utf-8"))
+    global fw_stock_img
+    fw_stock_img = stock
     fw = Fw(stock, [tw], args.md)
     print("1. démarrage"); boot(fw)
     print("2. interface"); interface(stock, fw)

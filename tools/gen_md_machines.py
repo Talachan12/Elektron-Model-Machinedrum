@@ -57,20 +57,46 @@ MACHINES = (
          knobs=(("Mod", "MOD", 64), ("Mod Freq", "MFRQ", 32), ("Noise", "NOIS", 64), ("Noise Decay", "NDEC", 64))),
 )
 RENDER = "md_render32"
+# SRAM interne (notes/28) : comme les moteurs du Syntakt, à la place des tables d'ondes de CHORD (recopiées dans la
+# charge utile, CHORD_PTRS réécrits). Le crochet de démarrage (stub.S, SRAM_RUN_AT / SRAM2_RUN_AT) recopie le début de
+# la charge utile dans les deux zones. Zone 1 : tout notre code, le filtre et les petites tables (exécutés et lus à
+# chaque bloc : hors du cache d'instructions de 8 Ko et de la SDRAM) ; zone 2 : l'état des pistes. Le sinus (128 Ko)
+# reste en SDRAM, après la place des deux zones.
+(SRAM1, SRAM1_END), (SRAM2, SRAM2_END) = gs.CHORD_BANKS
+SRAM1_LEN, SRAM2_LEN = SRAM1_END - SRAM1, SRAM2_END - SRAM2
+SINE_OFF = (SRAM1_LEN + SRAM2_LEN + 0xff) & ~0xff     # le sinus, en SDRAM, après la place de transit des deux zones
+CHORD_OFF = 0x28000                                   # tables d'ondes de CHORD (30 Ko), sous gs.STUBS
 LINK = """SECTIONS
 {{
-  .text {code:#x} : {{ *(.text.md_render32) *(.text*) }}
-  .rodata : {{ *(.rodata*) }}
-  .data : {{ *(.data*) }}
-  .bss {bss:#x} (NOLOAD) : {{ *(.bss*) *(COMMON) }}
+  .sdram {sine:#x} : {{ *(.rodata.trx_b2_sine) }}
+  .sram {sram1:#x} : AT({code:#x}) {{ *(.text.md_render32) *(.text*) . = ALIGN(4); *(.rodata*) *(.data*) }}
+  .sram2 {sram2:#x} (NOLOAD) : {{ *(.bss*) *(COMMON) }}
   /DISCARD/ : {{ *(.comment) *(.note*) *(.eh_frame*) }}
 }}
 """
 
 
+def lma(va, pay):
+    """Adresse de transit (dans la charge utile) d'une adresse d'exécution."""
+    if SRAM1 <= va < SRAM1_END:
+        return pay + va - SRAM1
+    if SRAM2 <= va < SRAM2_END:
+        return pay + SRAM1_LEN + va - SRAM2
+    return va
+
+
+def chord_moved(a, pay):
+    at = pay + CHORD_OFF
+    for lo, hi in gs.CHORD_BANKS:
+        if lo <= a < hi:
+            return at + a - lo
+        at += hi - lo
+    raise SystemExit(f"!! {a:#x} : pas une table d'ondes de CHORD")
+
+
 def compile_machines(tmp, md_syx, pay):
-    """Notre C, lié à pay (code, tables, données) et pay + gm.BSS_OFF (variables) : (octets, symboles, fin du BSS)."""
-    bss_at = pay + gm.BSS_OFF
+    """Notre C : zone 1 de SRAM (code, filtre, petites tables, transit au début de pay), zone 2 (variables), sinus
+    en SDRAM. Rend (octets de pay jusqu'à la fin du sinus, symboles aux adresses d'exécution)."""
     gen = headers.write(md_syx, tmp / "gen")
     objs = []
     for src in (SRC / "bridge.c", SRC / "trx_b2.c", SRC / "efm.c", gen / "trx_b2_md.c"):
@@ -78,7 +104,7 @@ def compile_machines(tmp, md_syx, pay):
         gx.run([gx.CROSS + "gcc", *CFLAGS, f"-I{SRC}", f"-I{gen}", "-c", str(src), "-o", str(o)])
         objs.append(o)
     ld, elf, out = tmp / "link.ld", tmp / "md.elf", tmp / "md.bin"
-    ld.write_text(LINK.format(code=pay, bss=bss_at))
+    ld.write_text(LINK.format(sine=pay + SINE_OFF, sram1=SRAM1, code=pay, sram2=SRAM2))
     keep = [x for m in MACHINES for x in ("-u", m["update"])]
     gx.run([gx.CROSS + "ld", "-T", str(ld), "--gc-sections", "--no-warn-rwx-segments", "-e", RENDER, *keep,
             "-o", str(elf), *map(str, objs)])
@@ -86,26 +112,27 @@ def compile_machines(tmp, md_syx, pay):
     for line in gx.run([gx.CROSS + "objdump", "-h", str(elf)]).splitlines():
         f = line.split()
         if len(f) > 4 and f[0].isdigit():
-            secs[f[1]] = (int(f[3], 16), int(f[2], 16))
-    extra = set(secs) - {".text", ".rodata", ".data", ".bss"}
+            secs[f[1]] = (int(f[3], 16), int(f[2], 16))      # adresse d'exécution, taille
+    extra = set(secs) - {".sdram", ".sram", ".sram2"}
     if extra:
         raise SystemExit(f"!! sections inattendues : {sorted(extra)}")
+    if secs[".sram"][1] > SRAM1_LEN or secs.get(".sram2", (0, 0))[1] > SRAM2_LEN:
+        raise SystemExit(f"!! SRAM : {secs['.sram'][1]} o / {SRAM1_LEN}, {secs.get('.sram2', (0, 0))[1]} o / {SRAM2_LEN}")
+    if secs[".sdram"][1] != 4 * 32768:
+        raise SystemExit("!! sinus")
     undef = [l for l in gx.run([gx.CROSS + "nm", "-u", str(elf)]).splitlines() if l.strip()]
     if undef:
         raise SystemExit(f"!! symboles non résolus : {undef}")
-    gx.run([gx.CROSS + "objcopy", "-O", "binary", "-R", ".bss", str(elf), str(out)])
-    blob = out.read_bytes()
+    gx.run([gx.CROSS + "objcopy", "-O", "binary", "-R", ".sram2", str(elf), str(out)])
+    blob = out.read_bytes()                                 # de pay (transit de la zone 1) à la fin du sinus
     syms = {}
     for line in gx.run([gx.CROSS + "nm", str(elf)]).splitlines():
         p_ = line.split()
         if len(p_) == 3:
             syms[p_[2]] = int(p_[0], 16)
-    if pay + len(blob) > gs.STUBS:
-        raise SystemExit(f"!! code et tables trop grands : {len(blob)} o")
-    bss = secs.get(".bss", (bss_at, 0))
-    if bss[0] != bss_at:
-        raise SystemExit("!! BSS")
-    return blob, syms, (bss[0] + bss[1] + 3) & ~3
+    if len(blob) != SINE_OFF + 4 * 32768 or pay + len(blob) > pay + CHORD_OFF:
+        raise SystemExit(f"!! charge utile : {len(blob)} o")
+    return blob, syms, dict(sram=secs[".sram"][1], sram2=secs.get(".sram2", (0, 0))[1])
 
 
 def build_tweak(img, md_syx=None):
@@ -121,7 +148,7 @@ def build_tweak(img, md_syx=None):
     u32 = lambda va: struct.unpack_from(">I", cur, va - BASE)[0]
     with tempfile.TemporaryDirectory() as d:
         tmp = pathlib.Path(d)
-        blob, syms, bss_end = compile_machines(tmp, md_syx, pay)
+        blob, syms, used = compile_machines(tmp, md_syx, pay)
         names_at, upd_at, rnd_at, map_at = gs.DATA, gs.DATA + 4 * nm, gs.DATA + 8 * nm, gs.DATA + 16 * nm
         firsts = [76 + 5 * i for i in range(n)]
         stubs, ssyms = gm.assemble(tmp, "det", gs.detours_asm(n, [m["image"] for m in MACHINES], firsts), gs.STUBS)
@@ -216,6 +243,9 @@ def build_tweak(img, md_syx=None):
             w(va, bytes.fromhex(old), jmp(ssyms[sym]))
         for va, old, sym in g7.CALLS:
             w(va, bytes.fromhex(old), bytes.fromhex("4eb9") + g7.be32(ssyms[sym]) + bytes.fromhex("4e71"))
+        # tables d'ondes de CHORD : lues dans la charge utile, leur place en SRAM reçoit notre code (notes/28)
+        ptrs = [u32(gs.CHORD_PTRS + 4 * i) for i in range(31)]
+        w(gs.CHORD_PTRS, b"".join(g7.be32(x) for x in ptrs), b"".join(g7.be32(chord_moved(x, pay)) for x in ptrs))
 
         # --- charge utile
         parts = [
@@ -225,6 +255,9 @@ def build_tweak(img, md_syx=None):
             {"dest": f"{gs.DESCN:#x}", "cycles": [f"{g7.DESC:#x}", f"{g7.DESC + g7.NDESC * g7.DSTRIDE:#x}"]},
             {"dest": f"{gs.DESCN + g7.NDESC * g7.DSTRIDE:#x}", "hex": bytes(new).hex()},
         ]
+        for lo, hi in gs.CHORD_BANKS:           # tables d'ondes de CHORD, depuis le MAIN OS de l'utilisateur
+            src = next(s_ + lo - d_ for s_, e_, d_ in gs.CY_SRAM_INIT if d_ <= lo and hi <= d_ + e_ - s_)
+            parts.append({"dest": f"{chord_moved(lo, pay):#x}", "cycles": [f"{src:#x}", f"{src + hi - lo:#x}"]})
         lo_, hi_ = g7.DESC - BASE, g7.DESC - BASE + g7.NDESC * g7.DSTRIDE
         final, orig = bytearray(cur[lo_:hi_]), img[lo_:hi_]
         alg = g7.ALG_DESC * g7.DSTRIDE + 0x0c
@@ -233,7 +266,7 @@ def build_tweak(img, md_syx=None):
         struct.pack_into(">I", final, alg, top << 8)
         reloc = [[f"{gs.DESCN + k:#x}", orig[k:k + 4].hex(), final[k:k + 4].hex()]
                  for k in range(0, len(final), 4) if final[k:k + 4] != orig[k:k + 4]]
-        size = bss_end - pay
+        size = gm.BSS_OFF                       # jusqu'aux enregistrements des machines (gs.RECS) compris
         segs = gs.segments(parts, size)
         at = BASE + gx.IMAGE_LEN
         if at + sum(n_ for _, n_ in segs) > gs.END_LIMIT:
@@ -241,7 +274,8 @@ def build_tweak(img, md_syx=None):
         (tmp / "segs.inc").write_text("".join(f"\t.long\t{a:#x}, {n_ // 4}\n" for a, n_ in segs))
         stub, _ = gm.assemble(tmp, "stub", gx.SRC / "stub.S", gx.CAVE, [
             f"-DPAYLOAD_SRC={at:#x}", f"-DPAYLOAD_DST={pay:#x}", f"-DPAYLOAD_LONGS={size // 4}", "-DPACK",
-            f"-I{tmp}"])
+            f"-DSRAM_RUN_AT={SRAM1:#x}", f"-DSRAM_LONGS={SRAM1_LEN // 4}", f"-DSRAM2_RUN_AT={SRAM2:#x}",
+            f"-DSRAM2_LONGS={SRAM2_LEN // 4}", f"-I{tmp}"])
     if len(stub) > sprites.zone(gx.CAVE)[1]:
         raise SystemExit("!! crochet de démarrage trop grand pour sa place")
     writes[0] = {"off": gx.CAVE - BASE, "old": "ff" * len(stub), "new": stub.hex()}
@@ -255,11 +289,11 @@ def build_tweak(img, md_syx=None):
     if md_syx is None:                          # bouche-trous -> recettes « md »
         blob_ = bytearray(blob)
         for name, (sym, cnt) in headers.ARRAYS.items():
-            o = syms[sym] - pay
+            o = lma(syms[sym], pay) - pay
             if blob_[o:o + 4 * cnt] != struct.pack(">I", headers.PLACEHOLDER) * cnt:
                 raise SystemExit(f"!! {sym} : bouche-trous introuvables")
             blob_[o:o + 4 * cnt] = bytes(4 * cnt)
-            parts.append({"dest": f"{syms[sym]:#x}", "md": name, "size": 4 * cnt})
+            parts.append({"dest": f"{lma(syms[sym], pay):#x}", "md": name, "size": 4 * cnt})
         parts[0]["hex"] = blob_.hex()
 
     appended = {json.loads(f.read_text(encoding="utf-8"))["id"] for f in gm.DEV.glob("[0-9]*.json")
@@ -297,7 +331,7 @@ def build_tweak(img, md_syx=None):
             if ref[w_["off"]]["old"] != w_["old"] and set(ref[w_["off"]]["old"] + w_["old"]) != {"f"}:
                 raise SystemExit(f"!! usb_steady : {w_['off'] + BASE:#x}")
             out["writes"][i] = ref[w_["off"]]
-    return out, dict(code=len(blob), bss=bss_end - pay - gm.BSS_OFF, image=sum(n_ for _, n_ in segs), syms=syms)
+    return out, dict(code=len(blob), sram=used["sram"], sram2=used["sram2"], image=sum(n_ for _, n_ in segs), syms=syms)
 
 
 def main():
@@ -311,8 +345,8 @@ def main():
         raise SystemExit("!! ce n'est pas le MAIN OS 1.13 officiel")
     tweak, info = build_tweak(img)
     text = json.dumps(tweak, indent=1, ensure_ascii=False) + "\n"
-    print(f"  {tweak['id']} : {len(tweak['writes'])} écritures, code et tables {info['code']} o, variables "
-          f"{info['bss']} o, ajout à l'image {info['image']} o")
+    print(f"  {tweak['id']} : {len(tweak['writes'])} écritures, SRAM {info['sram']} + {info['sram2']} o "
+          f"(sur {SRAM1_LEN} + {SRAM2_LEN}), sinus en SDRAM, ajout à l'image {info['image']} o")
     if args.md:
         import build                                   # noqa: E402
         md = pathlib.Path(args.md).resolve()

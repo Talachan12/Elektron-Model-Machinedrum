@@ -34,7 +34,7 @@ You only need Python 3: no compiler, no extra packages.
    python3 tools/build.py -i model-cycles_OS1.13.syx -t md-machines --md Elektron_SPS1-1UW_OS1.63.syx
    ```
 3. Check the result. The patched MAIN OS SHA-256 must be
-   `87c36b3d56c5f76d4ae8c49c3217991894f39ff3af37bf51c534cd0f824d53e6`. The build writes
+   `07ab5d47c71f1815a28c64c14eef12a1dc50102d5a55b7f25b0aed1acfd76df8`. The build writes
    `model-cycles_OS1.13_mod.syx`.
 4. Flash it as described in [FLASH.md](FLASH.md). You need a MIDI interface on the Cycles' **MIDI IN** (TRS jack):
    it is also your way back to the official OS (STARTUP MENU). Back up your projects first.
@@ -88,7 +88,11 @@ Instructions per audio block for the whole voice loop, with one track playing, a
 | EfmBD | ≈ 11.8k |
 | EfmSD | ≈ 15k |
 
-The EFM cores multiply with the ColdFire's EMAC, as the OS's own voice loop does (MACSR 0xa0). All six stock tracks
+The EFM cores multiply with the ColdFire's EMAC, as the OS's own voice loop does (MACSR 0xa0). All our code, the
+resampler filter, the small Machinedrum tables and the track states run from the Cycles' internal SRAM, in place of
+the CHORD wavetables, which move to SDRAM (as with the Modded-Cycles Syntakt engines). This keeps our code out of the
+8 KB instruction cache; on hardware it costs far more than the instruction counts below show. The 128 KB sine table
+stays in SDRAM. All six stock tracks
 together take ≈ 42–51k. Some mixes:
 
 | Six tracks | Instructions per block |
