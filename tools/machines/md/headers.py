@@ -15,7 +15,7 @@ import md_sine        # noqa: E402
 
 # nom de la partie de charge utile ("md" dans le tweak) -> (symbole C, nombre de mots de 32 bits)
 ARRAYS = {"sine": ("trx_b2_sine", 32768), "pitch": ("trx_b2_pitch_tbl", 128), "dec": ("trx_b2_dec_tbl", 128),
-          "hold": ("trx_b2_hold_tbl", 128), "dirt": ("trx_b2_dirt_tbl", 128)}
+          "hold": ("trx_b2_hold_tbl", 128), "dirt": ("trx_b2_dirt_tbl", 128), "lut": ("md_lut", 326)}
 PLACEHOLDER = 0x5a5a5a5a
 
 

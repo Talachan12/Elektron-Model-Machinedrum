@@ -19,6 +19,8 @@ TABLES = {                  # adresse, pas (octets) entre deux valeurs de potard
     "hold": (0x24c794 + 0x320, 8),      # (HOLD >> 4) & 0xffc = 8k octets
     "dirt": (0x24d794, 4),              # tbl[DIRT >> 7]
 }
+# table des décroissances des machines EFM : 0x24bf94 + 0x24c + 4 * ((potard << 7) * mul >> 12), mul <= 0x52
+LUT = (0x24bf94 + 0x24c, 326)
 NAME_AT = 0x24f4b9          # "TRXB2PTCHDEC\0RAMPHOLDTICKNOISDIRTDIST" : verifie que c'est le bon OS
 NAME = b"TRXB2PTCHDEC\x00RAMPHOLDTICKNOISDIRTDIST"
 FN_AT, FN_HEAD = 0x201fd2, bytes.fromhex("4feffff448d70c04226f0010246f0014")
@@ -70,7 +72,9 @@ def tables(path):
         v = int.from_bytes(b, "big")
         return v - (1 << 32) if v >> 31 else v
 
-    return {k: [s32(at(a + step * i, 4)) for i in range(128)] for k, (a, step) in TABLES.items()}, sha
+    out = {k: [s32(at(a + step * i, 4)) for i in range(128)] for k, (a, step) in TABLES.items()}
+    out["lut"] = [s32(at(LUT[0] + 4 * i, 4)) for i in range(LUT[1])]
+    return out, sha
 
 
 if __name__ == "__main__":

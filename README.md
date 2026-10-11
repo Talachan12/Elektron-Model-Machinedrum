@@ -1,7 +1,7 @@
 <div align="center">
 
-> **This fork adds TrxB2**: the Machinedrum TRX-B2 kick as a 7th Model:Cycles machine, patched from your own
-> official firmware files. See [TRX-B2.md](TRX-B2.md).
+> **This fork adds Machinedrum machines** to the Model:Cycles: TRX-B2, EFM-BD and EFM-SD, ported sample for sample
+> and patched from your own official firmware files. See [MD-MACHINES.md](MD-MACHINES.md).
 
 # Modded Cycles
 
