@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Tiny5&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=2026-10-12-04">
-<link rel="stylesheet" href="../assets/guide.css?v=2026-10-12-04">
+<link rel="stylesheet" href="../assets/site.css?v=2026-10-12-05">
+<link rel="stylesheet" href="../assets/guide.css?v=2026-10-12-05">
 <script>try{var l=localStorage.getItem("mc-lang"),t=localStorage.getItem("mc-theme")}catch(e){}document.documentElement.lang=l||(/^fr\b/i.test(navigator.language||"")?"fr":"en");if(t)document.documentElement.setAttribute("data-theme",t)</script>
 </head>
 <body data-page="guide">
@@ -60,6 +60,7 @@
         <li><a href="#midi-live-both"><span data-l="en">Live MIDI OUT + THRU toggle</span><span data-l="fr">Basculer MIDI OUT + THRU en direct</span></a></li>
         <li><a href="#track-filter"><span data-l="en">Per-track filter</span><span data-l="fr">Filtre par piste</span></a></li>
         <li><a href="#lfo-plus">LFO 2, 3, 4</a></li>
+        <li><a href="#md-machines"><span data-l="en">Machinedrum machines</span><span data-l="fr">Machines du Machinedrum</span></a></li>
         <li><a href="#mods-on-samples"><span data-l="en">Mods on a Model:Samples</span><span data-l="fr">Des mods sur un Model:Samples</span></a></li>
         <li><a href="#samples"><span data-l="en">Samples OS</span><span data-l="fr">OS Samples</span></a></li>
         <li><a href="#stock"><span data-l="en">Back to stock</span><span data-l="fr">Revenir à l'origine</span></a></li>
@@ -727,8 +728,38 @@
         </dl>
       </section>
 
+      <section id="md-machines">
+        <h2><span class="n">22</span><span data-l="en">Machinedrum machines</span><span data-l="fr">Machines du Machinedrum</span></h2>
+        <p class="by"><span data-l="en">By</span><span data-l="fr">Par</span> <a href="https://github.com/Talachan12/Elektron-Model-Machinedrum" target="_blank" rel="noopener">Talachan12</a></p>
+        <p class="lede"><span data-l="en">Three machines of the Elektron Machinedrum SPS-1 UW, ported sample for sample from its DSP code: the TRX-B2 kick, the TRX-SD snare and the TRX-CH closed hi-hat. In the emulator, they compute exactly the same samples as the Machinedrum's own code.</span><span data-l="fr">Trois machines du Machinedrum SPS-1 UW d'Elektron, portées à l'échantillon près depuis le code de son DSP : la grosse caisse TRX-B2, la caisse claire TRX-SD et le charley fermé TRX-CH. En émulation, elles calculent exactement les mêmes échantillons que le code du Machinedrum.</span></p>
+        <ol>
+          <li><span data-l="en">In the flasher, tick <b>Machinedrum machines</b>, then drop the official <code>Elektron_SPS1-1UW_OS1.63.syx</code> in step 2 (from elektron.se, Machinedrum UW downloads): the machines' tables are read from it, on your computer. No Machinedrum needed.</span><span data-l="fr">Dans le flasher, cochez <b>Machines du Machinedrum</b>, puis déposez le fichier officiel <code>Elektron_SPS1-1UW_OS1.63.syx</code> à l'étape 2 (sur elektron.se, téléchargements du Machinedrum UW) : les tables des machines s'y lisent, sur votre ordinateur. Pas besoin d'avoir un Machinedrum.</span></li>
+          <li><span data-l="en">Press <b>MACHINES</b> and turn past Chord: <b>TrxB2</b> (7th machine, Kick's icon), <b>TrxSD</b> (8th, Snare's icon) and <b>TrxCH</b> (9th, Metal's icon), on any track.</span><span data-l="fr">Appuyez sur <b>MACHINES</b> et tournez après Chord : <b>TrxB2</b> (7<sup>e</sup> machine, icône de Kick), <b>TrxSD</b> (8<sup>e</sup>, icône de Snare) et <b>TrxCH</b> (9<sup>e</sup>, icône de Metal), sur n'importe quelle piste.</span></li>
+          <li><span data-l="en"><b>PITCH</b>, plus the trig note − 60, gives the Machinedrum's PTCH (LPF, the tuning of its filter, on TrxCH); <b>DECAY</b> gives DEC. The other knobs follow the table. With PUNCH off, the fixed values are the Machinedrum's defaults.</span><span data-l="fr"><b>PITCH</b>, plus la note du trig − 60, donne le PTCH du Machinedrum (LPF, l'accord de son filtre, sur TrxCH) ; <b>DECAY</b> donne DEC. Les autres potards suivent le tableau. PUNCH éteint, les valeurs fixes sont celles du Machinedrum par défaut.</span></li>
+        </ol>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Cycles</th><th>TrxB2</th><th>TrxSD</th><th>TrxCH</th></tr></thead>
+            <tbody>
+              <tr><th>COLOR</th><td>DIST</td><td>SNAP</td><td>MTAL</td></tr>
+              <tr><th>SHAPE</th><td>DIRT</td><td>TONE</td><td>HPF</td></tr>
+              <tr><th>SWEEP</th><td>RAMP</td><td>BUMP</td><td><span data-l="en">resonance (70 = Machinedrum)</span><span data-l="fr">résonance (70 = Machinedrum)</span></td></tr>
+              <tr><th>CONTOUR</th><td>HOLD</td><td>BENV</td><td>GAP</td></tr>
+              <tr><th>PUNCH</th><td>TICK 0 / 64</td><td>CLIP 0 / 64</td><td>–</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <dl class="facts">
+          <div><dt><span data-l="en">Sound</span><span data-l="fr">Son</span></dt><dd><span data-l="en">computed as on the Machinedrum, at 44.1 kHz, then brought to the Model:Cycles' 48 kHz by a filter flat to 20 kHz. Only the machines are ported: the Cycles' track stage (volume, pan, effects) applies, not the Machinedrum's track filter, EQ or SRR. TrxCH's SWEEP is an extra the Machinedrum doesn't have: the resonance of its filters, exactly the Machinedrum at 70.</span><span data-l="fr">calculé comme sur le Machinedrum, à 44,1 kHz, puis ramené aux 48 kHz du Model:Cycles par un filtre plat jusqu'à 20 kHz. Seules les machines sont portées : l'étage de piste du Cycles (volume, panoramique, effets) s'applique, pas le filtre, l'égaliseur ni le SRR de piste du Machinedrum. Le SWEEP de TrxCH est un ajout que le Machinedrum n'a pas : la résonance de ses filtres, exactement le Machinedrum à 70.</span></dd></div>
+          <div><dt><span data-l="en">Processor</span><span data-l="fr">Processeur</span></dt><dd><span data-l="en">at the attack, a TrxB2 voice costs about 1.2 original voices, TrxSD about 1.6 and TrxCH about 1.8 (measured in the emulator); a silent one almost nothing. Four original tracks with TrxB2 and TrxSD stay within the original OS's usual load. There is no load governor: start with a few tracks.</span><span data-l="fr">à l'attaque, une voix TrxB2 coûte environ 1,2 voix d'origine, TrxSD environ 1,6 et TrxCH environ 1,8 (mesuré en émulation) ; muette, presque rien. Quatre pistes d'origine avec TrxB2 et TrxSD restent dans la charge habituelle de l'OS d'origine. Il n'y a pas de régulateur de charge : commencez avec quelques pistes.</span></dd></div>
+          <div><dt><span data-l="en">Other mods</span><span data-l="fr">Autres mods</span></dt><dd><span data-l="en">not with Model-TG, MACRO or the Syntakt engines (the same extra machine slots and memory); goes with every other mod.</span><span data-l="fr">pas avec Model-TG, MACRO ni les moteurs du Syntakt (mêmes places de machines ajoutées et même mémoire) ; se combine avec tous les autres mods.</span></dd></div>
+          <div><dt><span data-l="en">Tested</span><span data-l="fr">Testé</span></dt><dd><span data-l="en">experimental. Checked in the emulator on the OS's own code: every sample identical to the Machinedrum's DSP code (run in a DSP56300 emulator) over hundreds of settings, menus and knobs working, the original machines unchanged. TrxB2, TrxSD and TrxCH played on the author's Model:Cycles; not yet tested on the project's own.</span><span data-l="fr">expérimental. Vérifié en émulation sur le code même de l'OS : chaque échantillon identique au code du DSP du Machinedrum (exécuté dans un émulateur DSP56300) sur des centaines de réglages, menus et potards qui marchent, machines d'origine inchangées. TrxB2, TrxSD et TrxCH joués sur le Model:Cycles de l'auteur ; pas encore testés sur celui du projet.</span></dd></div>
+        </dl>
+        <p class="note"><span data-l="en"><b>Before flashing another choice or the official firmware,</b> set your TrxB2, TrxSD and TrxCH tracks back to an original machine (Kick to Chord): the official OS doesn't have them.</span><span data-l="fr"><b>Avant de flasher un autre choix ou le firmware officiel,</b> remettez vos pistes TrxB2, TrxSD et TrxCH sur une machine d'origine (de Kick à Chord) : l'OS officiel ne les a pas.</span></p>
+      </section>
+
       <section id="mods-on-samples">
-        <h2><span class="n">22</span><span data-l="en">Mods on a Model:Samples</span><span data-l="fr">Des mods sur un Model:Samples</span></h2>
+        <h2><span class="n">23</span><span data-l="en">Mods on a Model:Samples</span><span data-l="fr">Des mods sur un Model:Samples</span></h2>
         <p class="lede"><span data-l="en">A Model:Samples can run the Model:Cycles OS with the same mods as a Model:Cycles. Whatever the machine, the flasher always installs the Model:Cycles OS; on a Model:Samples, <a href="#model-tg">Model-TG</a>'s Sampler plays your samples.</span><span data-l="fr">Un Model:Samples peut tourner sous l'OS du Model:Cycles avec les mêmes mods qu'un Model:Cycles. Quelle que soit la machine, le flasher installe toujours l'OS du Model:Cycles ; sur un Model:Samples, le Sampler de <a href="#model-tg">Model-TG</a> joue vos samples.</span></p>
         <ol>
           <li><span data-l="en">Back up your samples and projects with Elektron Transfer, then close Transfer.</span><span data-l="fr">Sauvegardez vos samples et vos projets avec Elektron Transfer, puis fermez Transfer.</span></li>
@@ -752,7 +783,7 @@
       </section>
 
       <section id="samples">
-        <h2><span class="n">23</span><span data-l="en">Samples OS</span><span data-l="fr">OS Samples</span></h2>
+        <h2><span class="n">24</span><span data-l="en">Samples OS</span><span data-l="fr">OS Samples</span></h2>
         <p class="lede"><span data-l="en">The Model:Cycles starts as a Model:Samples: you load and play your own samples, managed with Elektron Transfer.</span><span data-l="fr">Le Model:Cycles démarre en Model:Samples : vous chargez et jouez vos propres samples, gérés avec Elektron Transfer.</span></p>
         <p><span data-l="en">The flasher puts the official Model:Samples OS inside your Model:Cycles firmware file:</span><span data-l="fr">Le flasher place l'OS officiel du Model:Samples dans le fichier firmware de votre Model:Cycles :</span></p>
         <dl class="layers fig">
@@ -786,13 +817,13 @@
       </section>
 
       <section id="stock">
-        <h2><span class="n">24</span><span data-l="en">Back to stock</span><span data-l="fr">Revenir à l'origine</span></h2>
+        <h2><span class="n">25</span><span data-l="en">Back to stock</span><span data-l="fr">Revenir à l'origine</span></h2>
         <p><span data-l="en">The <b>Official firmware</b> tab of the flasher sends your OS file unchanged, over USB, like a normal update. It is also a good rehearsal before a first mod: it checks the cable and the setup without changing anything.</span><span data-l="fr">L'onglet <b>Firmware officiel</b> du flasher renvoie votre fichier d'OS sans le modifier, par USB, comme une mise à jour normale. C'est aussi une bonne répétition avant un premier mod : elle vérifie le câble et l'installation sans rien changer.</span></p>
         <p><span data-l="en">With Syntakt engines, the MACRO machine or Model-TG's Sampler, first set your tracks back to an original machine.</span><span data-l="fr">Avec des moteurs du Syntakt, la machine MACRO ou le Sampler de Model-TG, remettez d'abord vos pistes sur une machine d'origine.</span></p>
       </section>
 
       <section id="recovery">
-        <h2><span class="n">25</span><span data-l="en">Recovery</span><span data-l="fr">Secours</span></h2>
+        <h2><span class="n">26</span><span data-l="en">Recovery</span><span data-l="fr">Secours</span></h2>
         <p class="lede"><span data-l="en">If the Model:Cycles no longer starts, its startup menu can always reinstall the OS: it lives in an area that updates never write.</span><span data-l="fr">Si le Model:Cycles ne démarre plus, son menu de démarrage peut toujours réinstaller l'OS : il vit dans une zone que les mises à jour n'écrivent jamais.</span></p>
         <figure class="fig">
           <div data-device data-scenes="func @logo | func,mainvol | s4 @READY TO/>RECEIVE" data-ms="1300"></div>
@@ -806,7 +837,7 @@
       </section>
 
       <section id="trouble">
-        <h2><span class="n">26</span><span data-l="en">Troubleshooting</span><span data-l="fr">Dépannage</span></h2>
+        <h2><span class="n">27</span><span data-l="en">Troubleshooting</span><span data-l="fr">Dépannage</span></h2>
         <div class="faq">
           <details>
             <summary><span data-l="en">Nothing happens on the Model:Cycles screen</span><span data-l="fr">Rien ne se passe sur l'écran du Model:Cycles</span></summary>
@@ -872,8 +903,8 @@
   </div>
 </footer>
 
-<script src="../assets/release.js?v=2026-10-12-04"></script>
-<script src="../assets/cycles.js?v=2026-10-12-04"></script>
-<script src="../assets/site.js?v=2026-10-12-04"></script>
+<script src="../assets/release.js?v=2026-10-12-05"></script>
+<script src="../assets/cycles.js?v=2026-10-12-05"></script>
+<script src="../assets/site.js?v=2026-10-12-05"></script>
 </body>
 </html>

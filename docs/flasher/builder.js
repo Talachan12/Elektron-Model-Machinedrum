@@ -620,7 +620,7 @@ function syntaktVersion(ap, syntaktRaw) {
  * (ancienne valeur vérifiée à chaque fois). Rend ce qui va dans l'image : la charge utile entière, rangée en
  * morceaux (ap.pack : [adresse, taille], tools/build.py payload_image ; hors des morceaux, tout doit être à zéro),
  * ou compressée (ap.compress === "aplib" : aplibPack). */
-function buildPayload(ap, syntaktRaw, mainOs) {
+function buildPayload(ap, syntaktRaw, mainOs, md) {
   let img = null;                               // section 7 du Syntakt, si le tweak en copie des morceaux
   if (ap.syntakt) {
     if (!syntaktRaw) throw new Error("fichier Syntakt_OS1.42.syx requis");
@@ -629,7 +629,7 @@ function buildPayload(ap, syntaktRaw, mainOs) {
     img = syntaktSection(syntaktRaw, ap.syntakt.section);
     if (hex(sha256(img)) !== ap.syntakt.section_sha256) throw new Error("section 7 du Syntakt inattendue");
   }
-  const out = payloadRuntime(ap, img, mainOs);
+  const out = payloadRuntime(ap, img, mainOs, md);
   if (ap.compress) {
     if (ap.compress !== "aplib") throw new Error(`charge utile : compression ${ap.compress} inconnue`);
     return aplibPack(out);
@@ -645,10 +645,19 @@ function buildPayload(ap, syntaktRaw, mainOs) {
   return concat(...parts);
 }
 
-function payloadRuntime(ap, img, mainOs) {
+/* md : { nom : octets } lus dans l'OS du Machinedrum de l'utilisateur (md.js, MDTables.parts) pour les morceaux
+ * « md » des machines du Machinedrum (tools/machines/md/headers.py). */
+function payloadRuntime(ap, img, mainOs, md) {
   const dest = parseInt(ap.dest, 16), out = new Uint8Array(ap.size);
   for (const part of ap.parts) {
     const at = parseInt(part.dest, 16) - dest;
+    if (part.md) {
+      if (!md) throw new Error("fichier Elektron_SPS1-1UW_OS1.63.syx requis");
+      const chunk = md[part.md];
+      if (!chunk || chunk.length !== part.size) throw new Error(`OS du Machinedrum : ${part.md} de taille inattendue`);
+      out.set(chunk, at);
+      continue;
+    }
     const range = part.syntakt || part.cycles;
     const chunk = range
       ? (part.syntakt ? img : mainOs).subarray(parseInt(range[0], 16) - BASE, parseInt(range[1], 16) - BASE)
@@ -668,7 +677,8 @@ function payloadRuntime(ap, img, mainOs) {
 /* Construit le .syx modifie.
  * raw = Uint8Array du .syx officiel ; device = device.json ; chosen = [tweak] ;
  * opts = { expectMainOsSha, refMods, force, syntakt } ; syntakt = Uint8Array du Syntakt_OS1.42.syx, exigé par un tweak
- * « append » qui en copie des morceaux (ap.syntakt) ; Model-TG n'en a pas besoin. refMods = REF_MODS de app.js
+ * « append » qui en copie des morceaux (ap.syntakt) ; Model-TG n'en a pas besoin. md = { nom : octets } de l'OS du
+ * Machinedrum (md.js), exigé par les machines du Machinedrum (morceaux « md »). refMods = REF_MODS de app.js
  * (notes/49) : l'empreinte des ecritures (w) et de la charge utile (p) de chaque tweak, comparees ici ; un tweak
  * dont l'empreinte differe est refuse. modsChecked : chaque tweak choisi avait son empreinte, et elle correspond.
  * Renvoie { raw, mainOsSha, patchedBytes, caves, modsChecked, product, name }. */
@@ -697,7 +707,7 @@ function build(raw, device, chosen, opts = {}) {
   for (const t of apps) {
     const ap = t.append;
     if (BASE + full.length !== parseInt(ap.at, 16)) throw new Error("l'image ne finit pas où le tweak l'attend");
-    const payload = buildPayload(ap, opts.syntakt, mainOs);
+    const payload = buildPayload(ap, opts.syntakt, mainOs, opts.md);
     if (refOf(t) && hex(sha256(payload)) !== refOf(t).p) throw new Error(`${t.id} : charge utile differente de la reference`);
     full = concat(full, payload);
     fullDirty = concat(fullDirty, new Uint8Array(payload.length).fill(1));

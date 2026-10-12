@@ -312,6 +312,21 @@ FEATURES = [
         ],
     },
     {
+        "id": "md-machines",
+        "cat": "sound",
+        "label": "Machines du Machinedrum : TRX-B2, TRX-SD, TRX-CH",
+        "desc": "La grosse caisse, la caisse claire et le charley fermé TRX du Machinedrum, en machines 7, 8 et 9, "
+                "portés à l'échantillon près depuis son DSP. Leurs tables se lisent dans TON fichier "
+                "Elektron_SPS1-1UW_OS1.63.syx (à déposer à l'étape 2). PITCH, DECAY, COLOR, SHAPE, SWEEP, CONTOUR "
+                "et PUNCH règlent les paramètres du Machinedrum.",
+        "status": "experimental",
+        "credit": {"kind": "by", "who": "Talachan12", "repo": "Talachan12/Elektron-Model-Machinedrum"},
+        "needs": "machinedrum",
+        # mêmes places de machines ajoutées et même SRAM (tables d'ondes de CHORD) que ces cartes (notes/58 §5)
+        "excludes": ["model-tg", "macro", "syntakt"],
+        "variants": [{"file": "26-md-machines", "label": None}],
+    },
+    {
         "id": "syntakt",
         "cat": "sound",
         "label": "Vrais moteurs du Syntakt",
@@ -503,6 +518,8 @@ def render():
                     "download": "https://www.elektron.se/support-downloads/modelsamples"},
         # fonctionnalités « needs: syntakt » : le fichier officiel Syntakt_OS1.42.syx de l'utilisateur
         "syntakt": {"download": "https://www.elektron.se/support-downloads/syntakt"},
+        # fonctionnalités « needs: machinedrum » : le fichier officiel Elektron_SPS1-1UW_OS1.63.syx de l'utilisateur
+        "machinedrum": {"download": "https://www.elektron.se/support-downloads/machinedrum-uw"},
         "shared": shared,                       # valeurs repetees d'un tweak a l'autre (share, HYDRATE)
     }
     body = json.dumps(payload, ensure_ascii=False, indent=1)

@@ -169,7 +169,7 @@ def add_to(tweak, tg_syms=None):
         lo, hi = pay + X_CODE, pay + X_VARS
         for x in tweak["append"]["parts"]:
             a = int(x["dest"], 16)
-            n = len(x["hex"]) // 2 if "hex" in x else (lambda r: int(r[1], 16) - int(r[0], 16))(x.get("syntakt") or x["cycles"])
+            n = len(x["hex"]) // 2 if "hex" in x else x["size"] if "size" in x else (lambda r: int(r[1], 16) - int(r[0], 16))(x.get("syntakt") or x["cycles"])
             if a < hi and lo < a + n:
                 raise SystemExit("!! régulateur : la place de la décision est prise")
         free.append([lo, None, 0, hi - lo])

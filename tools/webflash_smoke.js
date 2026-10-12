@@ -23,7 +23,8 @@ const REAL_ST = REAL.find((f) => /syntakt/i.test(path.basename(f)));
 const ST_NAME = REAL_ST ? path.basename(REAL_ST) : "Syntakt_OS1.42.syx";
 const ST_VERSION = (/OS(\d+\.\d+)/.exec(ST_NAME) || [])[1];   // "1.42" or "1.41": both official, same engines
 const REAL_SMP = REAL.find((f) => /samples/i.test(path.basename(f)));
-const REAL_OS = REAL.find((f) => f !== REAL_ST && f !== REAL_SMP);
+const REAL_MD = REAL.find((f) => /SPS1|machinedrum/i.test(path.basename(f)));
+const REAL_OS = REAL.find((f) => f !== REAL_ST && f !== REAL_SMP && f !== REAL_MD);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // SMOKE_SHARD=k/n (tools/webflash_smoke.sh with SMOKE_JOBS=n): part k of the combinations of section 6; the other
 // sections run in part 0 only; each part writes what it built to SMOKE_SEEN and the script checks the coverage
@@ -213,21 +214,21 @@ async function main() {
     check(typeof w.MCBuilder === "object" && typeof w.MCFlasher === "object", "MCBuilder + MCFlasher present");
     const ids = w.MC_TWEAKS.tweaks.map((x) => x.id);
     const nEng = w.MC_TWEAKS.features.find((f) => f.engines).engines.length;
-    check(ids.slice(0, 23).join() === "6ch-usbup,model-tg,model-tg-st,sample-preview,sample-preview-st,latching-mute,trig-preview,browser-scroll,trig-hold,arp,tempo-max,boot-anim,multiline-browser,level-pan-values,trigless-dim,midi-both,midi-live-both,macro,macro-tg,chord-keys,track-filter,lfo-plus,syntakt-sd"
-      && ids.length === 22 + 4 * ((1 << nEng) - 1) && ids.includes("syntakt-sd-cp") && ids.includes("syntakt-tg-sd-cp-toy-bits")
+    check(ids.slice(0, 24).join() === "6ch-usbup,model-tg,model-tg-st,sample-preview,sample-preview-st,latching-mute,trig-preview,browser-scroll,trig-hold,arp,tempo-max,boot-anim,multiline-browser,level-pan-values,trigless-dim,midi-both,midi-live-both,macro,macro-tg,chord-keys,track-filter,lfo-plus,md-machines,syntakt-sd"
+      && ids.length === 23 + 4 * ((1 << nEng) - 1) && ids.includes("md-machines") && ids.includes("syntakt-sd-cp") && ids.includes("syntakt-tg-sd-cp-toy-bits")
       && ids.includes("syntakt-sd-macro") && ids.includes("syntakt-tg-sd-cp-toy-bits-swarm-macro")
-      && ids.includes("arp") && !ids.some((x) => /exact|snare|multiout/.test(x)) && w.MC_TWEAKS.features.length === 20,
+      && ids.includes("arp") && !ids.some((x) => /exact|snare|multiout/.test(x)) && w.MC_TWEAKS.features.length === 21,
       `MC_TWEAKS: only USB-friendly tweaks, one tweak per choice of the ${nEng} Syntakt engines (no SNARE replacement), alone and with Model-TG, with and without MACRO: ${ids.length} tweaks`);
     check(/build \d{4}-/.test(text(doc, "build-stamp")), "version stamp shown");
     const srcs = [...doc.querySelectorAll("script[src]")].map((x) => x.getAttribute("src"));
-    check(["builder.js", "tweaks.js", "flasher.js", "app.js"].every((f) => srcs.some((x) => x.startsWith(f + "?")))
+    check(["builder.js", "md.js", "tweaks.js", "flasher.js", "app.js"].every((f) => srcs.some((x) => x.startsWith(f + "?")))
       && srcs.every((x) => x.endsWith("?v=" + w.MC_BUILD)), "scripts loaded with ?v=<build> (no stale cache): " + srcs.join());
     check(doc.getElementById("compat").hidden, "no compatibility banner in a good browser");
     // display order: by section (Packs, Sounds & machines, Sequencer, Live playing, Screen & browsing, USB & MIDI),
     // FEATURES order inside a section; the build keeps FEATURES order (checked in 1b)
     const feats = [...doc.querySelectorAll("#features input[type=checkbox]")].map((c) => c.id);
-    check(feats.join() === "feat-model-tg,feat-macro,feat-track-filter,feat-lfo-plus,feat-syntakt,feat-trig-preview,feat-trig-hold,feat-arp,feat-tempo-max,feat-trigless-dim,feat-latching-mute,feat-chord-keys,feat-sample-preview,feat-browser-scroll,feat-boot-anim,feat-multiline-browser,feat-level-pan-values,feat-usb6,feat-midi-both,feat-midi-live-both",
-      "20 feature rows, by section: " + JSON.stringify(feats));
+    check(feats.join() === "feat-model-tg,feat-macro,feat-track-filter,feat-lfo-plus,feat-md-machines,feat-syntakt,feat-trig-preview,feat-trig-hold,feat-arp,feat-tempo-max,feat-trigless-dim,feat-latching-mute,feat-chord-keys,feat-sample-preview,feat-browser-scroll,feat-boot-anim,feat-multiline-browser,feat-level-pan-values,feat-usb6,feat-midi-both,feat-midi-live-both",
+      "21 feature rows, by section: " + JSON.stringify(feats));
     check(w.MC_TWEAKS.features.every((f) => doc.querySelector(`#cat-${f.cat || "other"} #mod-${f.id} #feat-${f.id}`)),
       "every feature has a row in its section (cat)");
     const tagOfFeat = (f) => (f.status === "tested" ? "Tested" : "Experimental");
@@ -257,9 +258,26 @@ async function main() {
     await wait(30);
     check(!doc.getElementById("feat-syntakt").checked && doc.querySelectorAll('input[name="eng-syntakt"]').length === 0
       && doc.getElementById("drop3-wrap").hidden, "last engine unticked -> the card turns off");
+    // Machinedrum machines: their own drop zone for the official Machinedrum OS, never with the Syntakt engines
+    check(doc.getElementById("drop4-wrap").hidden, "Machinedrum drop zone hidden until the Machinedrum machines are ticked");
+    doc.getElementById("feat-md-machines").click();
+    await wait(30);
+    check(!doc.getElementById("drop4-wrap").hidden && /Drop Elektron_SPS1-1UW_OS1.63.syx/.test(text(doc, "drop4"))
+      && /elektron\.se\/support-downloads\/machinedrum-uw/.test(doc.getElementById("step-file").innerHTML)
+      && /Experimental/.test(doc.querySelector("label[for=feat-md-machines] .tag").textContent)
+      && w.MCFlasherApp.chosenTweaks().map((x) => x.id).join() === "md-machines",
+      "Machinedrum machines ticked -> Machinedrum drop zone and download link, tagged Experimental");
+    doc.getElementById("feat-syntakt").click();
+    await wait(30);
+    const mdSt = w.MCFlasherApp.chosenTweaks().map((x) => x.id).join();
+    if (doc.getElementById("feat-syntakt").checked) { doc.getElementById("feat-syntakt").click(); await wait(30); }
+    if (doc.getElementById("feat-md-machines").checked) { doc.getElementById("feat-md-machines").click(); await wait(30); }
+    check(!/md-machines.*syntakt|syntakt.*md-machines/.test(mdSt) && doc.getElementById("drop4-wrap").hidden
+      && !w.MCFlasherApp.chosenTweaks().length,
+      "Machinedrum machines and Syntakt engines never ticked together: " + mdSt);
     const credits = [...doc.querySelectorAll("#features .credit a")].map((a) => a.href);
     const creditOf = (id) => [...doc.querySelectorAll(`label[for=feat-${id}] .credit a`)].map((a) => a.href);
-    check(credits.length === 17 && creditOf("usb6")[0] === "https://github.com/scottmetoyer/ms-multi-output"
+    check(credits.length === 18 && creditOf("usb6")[0] === "https://github.com/scottmetoyer/ms-multi-output"
       && /\/LICENSE-ms-multi-output\.txt$/.test(creditOf("usb6")[1])
       && creditOf("model-tg")[0] === "https://github.com/TinyGregAudio/Model-TG" && /\/LICENSE-Model-TG\.txt$/.test(creditOf("model-tg")[1])
       && creditOf("sample-preview")[0] === "https://github.com/TinyGregAudio/Model-TG" && /\/LICENSE-Model-TG\.txt$/.test(creditOf("sample-preview")[1])
@@ -267,10 +285,11 @@ async function main() {
         && /\/LICENSE-elektron-model-tweaks\.txt$/.test(creditOf(id)[1]))
       && creditOf("macro")[0] === "https://github.com/pichenettes/eurorack" && /\/LICENSE-Braids\.txt$/.test(creditOf("macro")[1])
       && creditOf("chord-keys").join() === "https://github.com/byNicoHeuser"
+      && creditOf("md-machines").join() === "https://github.com/Talachan12/Elektron-Model-Machinedrum"
       && ["midi-both", "midi-live-both"].every((id) => creditOf(id).join() === "https://github.com/AveyCole/Modded-Cycles")
       && creditOf("lfo-plus").length === 0
       && /based on a mod by DavidCaruso/.test((doc.querySelector("label[for=feat-lfo-plus] .credit") || {}).textContent || ""),
-      "each row credits its author, with a link to the MIT license of the code it carries, Chord Keys by Nico Heuser, the MIDI THRU mods by AveyCole: " + JSON.stringify(credits));
+      "each row credits its author, with a link to the MIT license of the code it carries, Chord Keys by Nico Heuser, the MIDI THRU mods by AveyCole, the Machinedrum machines by Talachan12: " + JSON.stringify(credits));
     const djd = ["level-pan-values", "trigless-dim"].map((id) => doc.querySelector(`label[for=feat-${id}] .credit`));
     check(djd.every((c) => c && c.textContent === "based on a mod by djd_oz" && !c.querySelector("a")),
       "djd_oz's two mods: “based on a mod by djd_oz”, no link (no public repository)");
@@ -861,8 +880,11 @@ async function main() {
     await wait(20);
     if (REAL_ST) app.loadSyntakt(new Uint8Array(fs.readFileSync(REAL_ST)), ST_NAME);
     await wait(20);
+    if (REAL_MD) app.loadMd(new Uint8Array(fs.readFileSync(REAL_MD)), "Elektron_SPS1-1UW_OS1.63.syx");
+    await wait(20);
     const needsSt = (key) => /sdvintage|syntakt/.test(key);
-    const offered = Object.keys(app.REF_MAINOS).filter((k) => REAL_ST || !needsSt(k));
+    const needsMd = (key) => /md-machines/.test(key);
+    const offered = Object.keys(app.REF_MAINOS).filter((k) => (REAL_ST || !needsSt(k)) && (REAL_MD || !needsMd(k)));
     check(Object.keys(app.REF_MODS).length === w.MC_TWEAKS.tweaks.length
       && w.MC_TWEAKS.tweaks.every((x) => app.REF_MODS[x.id] && /^[0-9a-f]{64}$/.test(app.REF_MODS[x.id].w)
         && !!x.append === /^[0-9a-f]{64}$/.test(app.REF_MODS[x.id].p || "")),
@@ -872,6 +894,7 @@ async function main() {
     const mine = () => ++idx % SHARD_N === SHARD_K;   // this part's share of the combinations
     for (const key of Object.keys(app.REF_MAINOS)) {
       if (!REAL_ST && needsSt(key)) continue;          // the real Syntakt engines need the Syntakt OS
+      if (!REAL_MD && needsMd(key)) continue;          // the Machinedrum machines need the Machinedrum OS
       if (!mine()) continue;
       await tickKey(w, doc, key);
       const f = app.state.fw;
@@ -894,7 +917,7 @@ async function main() {
     }
     if (SHARD_N === 1)
       check(seen.size === offered.length && offered.every((k) => seen.has(k)),
-        `REF_MAINOS: the ${seen.size} combinations of the sample all built` + (REAL_ST ? "" : " (without the Syntakt engines: no Syntakt OS given)"));
+        `REF_MAINOS: the ${seen.size} combinations of the sample all built` + (REAL_ST ? "" : " (without the Syntakt engines: no Syntakt OS given)") + (REAL_MD ? "" : " (without the Machinedrum machines: no Machinedrum OS given)"));
     else {
       fs.writeFileSync(process.env.SMOKE_SEEN, JSON.stringify({ seen: [...seen], offered }));
       console.log(`  (part ${SHARD_K + 1}/${SHARD_N}: ${seen.size} combinations built; coverage checked over all parts)`);

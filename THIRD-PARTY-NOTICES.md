@@ -11,7 +11,7 @@ names another license is under that license instead (see the table below).
 
 This license grants no rights in:
 
-- **Elektron firmware** (Model:Cycles, Model:Samples and Syntakt OS). No firmware image is included in this repository
+- **Elektron firmware** (Model:Cycles, Model:Samples, Syntakt and Machinedrum OS). No firmware image is included in this repository
   or on the website. You supply your own official file from elektron.se, and a firmware built from it contains
   Elektron's software: it is for your own use on your own machine. Do not redistribute built `.syx` files.
 - **The bytes copied from Elektron firmware** that appear in the tweak files and in `docs/flasher/tweaks.js`: the
@@ -21,7 +21,7 @@ This license grants no rights in:
 - **Third-party code and data** listed below, which keep their own licenses.
 - **Quotations** from the Elektronauts forum and other sources, which belong to their authors and are quoted with
   attribution.
-- **Trademarks.** Elektron, Model:Cycles, Model:Samples, Syntakt and Elektron Transfer are trademarks of Elektron Music
+- **Trademarks.** Elektron, Model:Cycles, Model:Samples, Syntakt, Machinedrum and Elektron Transfer are trademarks of Elektron Music
   Machines MAV AB. Modded-Cycles is an independent project, not affiliated with or endorsed by Elektron. The name and
   logo "Modded-Cycles" identify this project: a modified version should use another name or say clearly that it is
   unofficial.

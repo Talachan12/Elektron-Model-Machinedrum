@@ -43,6 +43,7 @@ Going back to the official firmware is one click away.
 | **Model-TG** | A full Sampler machine with seven playback modes, resampling, a beat-repeat page with master FX, slide trigs, Scale Lock and more, by [TinyGregAudio](https://github.com/TinyGregAudio/Model-TG). Works with the 6-channel mod and the Syntakt engines. | 🧪 Experimental |
 | **Sample preview** | An add-on to Model-TG: on a Sampler track, press FUNC + MACHINES (preset menu) and the track's pad plays the sample under the cursor, the way presets can be heard before you pick them. A sample not yet in memory loads on the first press; if there isn't enough free memory, or while Model-TG is resampling, the press plays nothing. The track keeps its own sample. Requires Model-TG (ticking it ticks Model-TG); reuses a short piece of [Model-TG's code](tweaks/model-cycles_OS1.13/LICENSE-Model-TG) (MIT). | ✅ Tested |
 | **MACRO machine** | One extra machine with the 47 synthesis models of Braids, Émilie Gillet's open-source macro-oscillator, from [her own code](https://github.com/pichenettes/eurorack): analog-style waves, FM, vowels, physical models, drums, wavetables and noises. `SHAPE` picks the model, `COLOR` and `SWEEP` shape it, `FUNC` + `PITCH` gives lo-fi (sample rate down to 4 kHz on the left, bit depth down to 2 bits on the right). Thirteen of the models are computed at 48 kHz for half the processor time. Works with Model-TG and the Syntakt engines. | ✅ Tested |
+| **Machinedrum machines** | The TRX-B2 kick, TRX-SD snare and TRX-CH closed hi-hat of the Elektron Machinedrum SPS-1 UW as machines 7, 8 and 9, ported sample for sample from its DSP code. Their tables are read from your own official Machinedrum UW OS 1.63 file, dropped in the flasher. The Cycles knobs set the Machinedrum parameters; TrxCH adds a resonance control. Not with Model-TG, MACRO or the Syntakt engines. By Talachan12. | 🧪 Experimental |
 | **Arpeggiator** | Hold several notes with RETRIG and they play as an arpeggio. `FUNC` + `RETRIG` adds direction (up, down, up/down, random, or in the order played) and range (1 to 4 octaves), saved with the pattern. | ✅ Tested |
 | **Chord Keys** | Play the selected CHORD track with the lower `TRIG 1–16` buttons: I–VII on 1–7, the same degrees one octave higher on 8–14, then I–II two octaves higher on 15–16. T1–T6 keep their normal controls. Choose a triad, 7th, 9th, 11th or 13th for each degree in `FUNC` + `RETRIG`, saved per track and pattern. SHAPE arranges the notes (BASE, close or open voicings); COLOR blends their levels. Does not combine with Model-TG. By Nico Heuser. | ✅ Tested |
 | **Tempo up to 546 BPM** | The TEMPO knob, tap tempo, MIDI clock and saved projects go past 300 BPM. Tempo-synced LFOs stay in time. | ✅ Tested |
@@ -99,7 +100,7 @@ Everything runs in your browser: your files are never uploaded anywhere.
 <summary><b>Going back to the official firmware</b></summary>
 
 Open the flasher, choose the **Official firmware** tab, drop your official OS file and flash. Before that,
-set any track that uses an added machine (Syntakt engine, MACRO or Sampler) back to one of the six original machines.
+set any track that uses an added machine (Syntakt engine, MACRO, Machinedrum machine or Sampler) back to one of the six original machines.
 
 </details>
 

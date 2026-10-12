@@ -22,7 +22,10 @@ n'ajoute rien : chaque combinaison de moteurs a sa version avec elle, MACRO, not
 du Syntakt (leur version « tg »). Une sélection dont un tweak n'a pas le tweak qu'il demande (« requires » du tweak)
 est laissée de côté, car les deux builds la refusent.
 
-    python3 tools/ref_mainos.py --cycles model-cycles_OS1.13.syx --syntakt Syntakt_OS1.42.syx [--check]
+Les machines du Machinedrum (md-machines) prennent leurs tables dans l'OS officiel du Machinedrum (--md).
+
+    python3 tools/ref_mainos.py --cycles model-cycles_OS1.13.syx --syntakt Syntakt_OS1.42.syx \
+        --md Elektron_SPS1-1UW_OS1.63.syx [--check]
 """
 import argparse
 import contextlib
@@ -160,11 +163,11 @@ GROUPS = {
     "single": "each card alone: each variant, each combination of real Syntakt engines",
     "pair": "every pair of cards the page lets you tick together",
     "largest": "the largest combinations: every compatible card ticked, from each card, both ways, with and without "
-               "the Syntakt engines",
+               "the cards that need another file (Syntakt engines, Machinedrum machines)",
 }
 
 
-def blocks(cycles, syntakt):
+def blocks(cycles, syntakt, md_path=None):
     """(texte de REF_MAINOS, texte de REF_MODS, nombre de combinaisons)."""
     tw = mc_tweaks()
     by_id = {t["id"]: t for t in tw["tweaks"]}
@@ -177,13 +180,19 @@ def blocks(cycles, syntakt):
         import syntakt as st                                # tools/emu/syntakt.py : vérifie le .syx et sa section 7
         st.dsp_image = functools.lru_cache(maxsize=None)(st.dsp_image)   # lu une fois (build_payload le relit)
         st_img = st.dsp_image(syntakt)
+    md = None
+    if any("md" in p_ for t in tw["tweaks"] for p_ in (t.get("append") or {}).get("parts", [])):
+        if not md_path:
+            raise SystemExit("!! les machines du Machinedrum demandent --md Elektron_SPS1-1UW_OS1.63.syx")
+        md = build.md_data(md_path)                         # tables lues une fois (vérifie le SHA-256 du fichier)
+        build.md_data = lambda path, _md=md: _md            # noqa: E731  (build_payload les relirait à chaque fois)
     known = tw["device"].get("cave_refs_ok")
 
     mods = []
     for t in tw["tweaks"]:
         ref = {"w": hashlib.sha256(writes_bytes(t)).hexdigest()}
         if t.get("append"):
-            ref["p"] = hashlib.sha256(build.payload_image(t, build.payload_runtime(t, stock, st_img))).hexdigest()
+            ref["p"] = hashlib.sha256(build.payload_image(t, build.payload_runtime(t, stock, st_img, md))).hexdigest()
         mods.append(f'  "{t["id"]}": {json.dumps(ref, separators=(", ", ": "))},')
 
     cards = Cards(tw["features"], tw["tweaks"])
@@ -206,7 +215,7 @@ def blocks(cycles, syntakt):
                 build.check_caves(stock, chosen, False, dirty, patched, known)
                 apps = tuple(t["id"] for t in chosen if t.get("append"))
                 if apps not in payloads:
-                    payloads[apps] = build.build_payload([by_id[i] for i in apps], stock, syntakt)[0] if apps else b""
+                    payloads[apps] = build.build_payload([by_id[i] for i in apps], stock, syntakt, md_path)[0] if apps else b""
         except SystemExit as e:
             raise SystemExit(f"!! la page propose {key}, que tools/build.py refuse : {e}")
         lines.append(f'  "{key}": "{build.sha(bytes(patched) + payloads[apps])}",')
@@ -217,9 +226,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cycles", required=True, help="model-cycles_OS1.13.syx officiel")
     ap.add_argument("--syntakt", required=True, help="Syntakt_OS1.42.syx (ou 1.41) officiel")
+    ap.add_argument("--md", help="Elektron_SPS1-1UW_OS1.63.syx officiel (machines du Machinedrum)")
     ap.add_argument("--check", action="store_true", help="vérifie que app.js est à jour")
     args = ap.parse_args()
-    ref, mods, n = blocks(args.cycles, args.syntakt)
+    ref, mods, n = blocks(args.cycles, args.syntakt, args.md)
     app = APP_JS.read_text(encoding="utf-8")
     want = {"REF_MAINOS": "\n" + ref, "REF_MODS": "\n" + mods}
     found = {k: BLOCKS[k].search(app) for k in want}

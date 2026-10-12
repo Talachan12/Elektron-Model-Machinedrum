@@ -11,14 +11,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=2026-10-12-04">
-<link rel="stylesheet" href="style.css?v=2026-10-12-04">
+<link rel="stylesheet" href="../assets/site.css?v=2026-10-12-05">
+<link rel="stylesheet" href="style.css?v=2026-10-12-05">
 <script>try{var l=localStorage.getItem("mc-lang"),t=localStorage.getItem("mc-theme")}catch(e){}document.documentElement.lang=l||(/^fr\b/i.test(navigator.language||"")?"fr":"en");if(t)document.documentElement.setAttribute("data-theme",t)</script>
 </head>
 <body data-page="flasher">
 <script>
   // Version stamp: an old date means the browser serves a cached copy -> hard reload.
-  window.MC_BUILD = "2026-10-12-04";
+  window.MC_BUILD = "2026-10-12-05";
   window.addEventListener("error", function (e) {
     var b = document.getElementById("errbar");
     if (!b) return;
@@ -178,6 +178,16 @@
         <p class="hint" data-i18n-html="get_os_syntakt"></p>
         <div id="file3-status" class="status" aria-live="polite"></div>
       </div>
+      <div id="drop4-wrap" hidden>
+        <label class="drop" id="drop4" tabindex="0">
+          <span class="drop-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path class="arrow" d="M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg></span>
+          <span class="drop-t"><strong id="drop4-title" data-i18n="drop4_title">Drop Elektron_SPS1-1UW_OS1.63.syx here</strong>
+            <span id="drop4-sub" data-i18n="drop4_sub">the official Machinedrum UW OS, for its sound tables, or click to choose it</span></span>
+          <input id="file4" type="file" accept=".syx" hidden>
+        </label>
+        <p class="hint" data-i18n-html="get_os_md"></p>
+        <div id="file4-status" class="status" aria-live="polite"></div>
+      </div>
     </div>
   </section>
 
@@ -268,11 +278,12 @@
 </footer>
 
 <!-- ?v= : same version stamp as MC_BUILD, so a browser never mixes a new page with cached old scripts -->
-<script src="../assets/release.js?v=2026-10-12-04"></script>
-<script src="../assets/site.js?v=2026-10-12-04"></script>
-<script src="builder.js?v=2026-10-12-04"></script>
-<script src="tweaks.js?v=2026-10-12-04"></script>
-<script src="flasher.js?v=2026-10-12-04"></script>
-<script src="app.js?v=2026-10-12-04"></script>
+<script src="../assets/release.js?v=2026-10-12-05"></script>
+<script src="../assets/site.js?v=2026-10-12-05"></script>
+<script src="builder.js?v=2026-10-12-05"></script>
+<script src="md.js?v=2026-10-12-05"></script>
+<script src="tweaks.js?v=2026-10-12-05"></script>
+<script src="flasher.js?v=2026-10-12-05"></script>
+<script src="app.js?v=2026-10-12-05"></script>
 </body>
 </html>

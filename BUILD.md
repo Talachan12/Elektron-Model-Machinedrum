@@ -389,6 +389,30 @@ même place).
 | `model-tg-st,macro-tg` | `606b7e5673bd47d4b9bfa7d2816e4c29bbe9b42883108950b0a42067eb4f94be` |
 | `6ch-usbup,model-tg-st,macro-tg,trig-hold,arp,tempo-max,boot-anim` | `b787bc07164bb4cd70f755e1bb498ca28cc1a587205d902f8c95ced09b88f5a2` |
 
+### Machines du Machinedrum (TrxB2, TrxSD, TrxCH)
+
+`tweaks/model-cycles_OS1.13/26-md-machines.json` (machines 7, 8 et 9) est produit par `tools/gen_md_machines.py` : les
+cœurs `tools/machines/md/` (TRX-B2, TRX-SD, TRX-CH du Machinedrum UW 1.63, portés à l'échantillon près depuis son DSP) et
+le pont 44,1 → 48 kHz, en charge utile à `0x43000000` avec la mécanique des machines ajoutées des moteurs du Syntakt, le
+code en SRAM à la place des tables d'ondes de CHORD ([note 58](notes/58-machines-machinedrum.md)). Les tables du
+Machinedrum ne sont pas dans le JSON : des recettes « md », remplies au build depuis TON `Elektron_SPS1-1UW_OS1.63.syx`
+(`--md`, vérifié par son SHA-256). Le générateur a besoin de `m68k-elf-gcc` ou `m68k-linux-gnu-gcc` (`M68K_CROSS`) ; la
+preuve, de `cc` pour la référence :
+```sh
+M68K_CROSS=m68k-elf- python3 tools/gen_md_machines.py --cycles model-cycles_OS1.13.syx \
+    --md Elektron_SPS1-1UW_OS1.63.syx [--check]
+python3 tools/build.py -i model-cycles_OS1.13.syx -t md-machines --md Elektron_SPS1-1UW_OS1.63.syx
+python3 tools/emu/test_md_machines.py --cycles model-cycles_OS1.13.syx --md Elektron_SPS1-1UW_OS1.63.syx \
+    [--with 6ch-usbup,latching-mute,trig-preview,browser-scroll,trig-hold,arp,tempo-max,boot-anim,multiline-browser,level-pan-values,trigless-dim,midi-both,chord-keys,track-filter]
+```
+Incompatible avec Model-TG, MACRO, les moteurs du Syntakt et SD VINTAGE (même mécanique, même place).
+
+| `-t` | MAIN OS patché (SHA-256) |
+|---|---|
+| `md-machines` | `ecffe87484d7254f87e4526a1eb506a3d9a9b699e1c2719d535b0cec0309ed27` |
+| `6ch-usbup,md-machines` | `1e21715409d61b4ceb965eed8893f6e257961d21d5e8980d4487891cbe8445ae` |
+| `6ch-usbup,latching-mute,trig-preview,browser-scroll,trig-hold,arp,tempo-max,boot-anim,multiline-browser,level-pan-values,trigless-dim,midi-both,chord-keys,track-filter,md-machines` | `1c522b9a970f994b8e9ae2902c1b5c7935229ef5b7b02c7d33ae3f13fac1d822` |
+
 ### MACRO avec les moteurs du Syntakt
 
 `tweaks/model-cycles_OS1.13/24-syntakt-<moteurs>-macro.json` et `31-syntakt-tg-<moteurs>-macro.json` (avec Model-TG,

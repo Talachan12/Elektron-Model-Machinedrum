@@ -3,6 +3,14 @@
  *   { version: "1.1", date: "2026-10-15", changes: [{ en: "…", fr: "…" }] }
  */
 window.MC_RELEASES = [
+  { version: "1.49", date: "2026-10-12", changes: [
+    { en: "New mod, Machinedrum machines, under Sounds & machines: the TRX-B2 kick, TRX-SD snare and TRX-CH closed hi-hat of the Elektron Machinedrum SPS-1 UW, as machines 7, 8 and 9 (TrxB2, TrxSD, TrxCH), ported sample for sample from its DSP code. Tick it, then drop the official Machinedrum UW OS 1.63 file in step 2: the machines' tables are read from it, on your computer.",
+      fr: "Nouveau mod, Machines du Machinedrum, dans Sons et machines : la grosse caisse TRX-B2, la caisse claire TRX-SD et le charley fermé TRX-CH du Machinedrum SPS-1 UW d'Elektron, en machines 7, 8 et 9 (TrxB2, TrxSD, TrxCH), portées à l'échantillon près depuis le code de son DSP. Cochez-le, puis déposez le fichier officiel de l'OS Machinedrum UW 1.63 à l'étape 2 : les tables des machines s'y lisent, sur votre ordinateur." },
+    { en: "PITCH, DECAY, COLOR, SHAPE, SWEEP, CONTOUR and PUNCH set the Machinedrum's parameters (see the guide); TrxCH's SWEEP adds a resonance control the Machinedrum doesn't have, exactly the Machinedrum at 70. Not with Model-TG, MACRO or the Syntakt engines; goes with every other mod.",
+      fr: "PITCH, DECAY, COLOR, SHAPE, SWEEP, CONTOUR et PUNCH règlent les paramètres du Machinedrum (voir le guide) ; le SWEEP de TrxCH ajoute une résonance que le Machinedrum n'a pas, exactement le Machinedrum à 70. Pas avec Model-TG, MACRO ni les moteurs du Syntakt ; se combine avec tous les autres mods." },
+    { en: "By Talachan12. Experimental: checked in the emulator on the OS's own code, every sample identical to the Machinedrum's DSP code, and played on its author's Model:Cycles; not yet tested on the project's.",
+      fr: "Par Talachan12. Expérimental : vérifié en émulation sur le code même de l'OS, chaque échantillon identique au code du DSP du Machinedrum, et joué sur le Model:Cycles de son auteur ; pas encore testé sur celui du projet." },
+  ] },
   { version: "1.48", date: "2026-10-12", changes: [
     { en: "New mod, LFO 2, 3, 4: three more LFOs on every track, under Sounds & machines. On the LFO page, press [LFO] again: a big 2, then 3, then 4 shows in the left box, and the fifth press closes the page. Each extra LFO has its own speed, multiplier, waveform, destination and depth; fade, start phase and mode stay shared with LFO 1",
       fr: "Nouveau mod, LFO 2, 3, 4 : trois LFO de plus sur chaque piste, dans Sons et machines. Sur la page LFO, appuyez encore sur [LFO] : un grand 2, puis 3, puis 4 s'affiche dans le cadre de gauche, et le cinquième appui ferme la page. Chaque LFO de plus a sa vitesse, son multiplicateur, sa forme, sa destination et sa profondeur ; le fondu, la phase de départ et le mode restent communs avec LFO 1" },
